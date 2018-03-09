@@ -1,0 +1,121 @@
+# Final encoding for extensible markup languages
+
+## Introduction
+
+In the age of digital documents, an author of content is confronted with
+the question which document format to choose (when it comes to text).
+
+Since every document format has its advantages, one might not want to
+commit to a specific format to soon. A series of blog posts might turn
+into a book (or at least a pretty typeset `pdf`) or an author might want
+to give the reader the freedom to read their text on differently sized
+displays --- if the reader has ever tried to read a paper in
+`pdf`-format on an e-book reader, no further motivation might be needed.
+
+Luckily the problem of decoupling initial text from output seems to be
+solved by the rise of markup languages like Markdown/Commonmark and
+alike. These type of documents can be easily transpiled/converted into
+all sorts of output formats by programs as `pandoc`.
+
+If the reader has no objections to such a publishing system, they might
+read no further and write away their next *format-agnostic* document.
+But if are interesting of bridging the gap between markup and
+programming languages and/or are interested how they can let a
+type-checker reason about the *well-formedness* of their document, they
+might be interested in the findings of the works that this paper tries
+to summarize.
+
+This paper mostly outlines the ideas of the work on `HSMLX: Typed SXML`
+and on the underlying idea of `Finally Tagless Interpreters`.
+
+In short `HSXML` has in our opinion two major advantages over markup
+languages such as Markdown/Commonmark et al.:
+
+1.  The well-formedness of the document
+2.  Easy extensibility in line with 1.
+
+While having these two advantages we still do not want to loose
+perspective and be true to our initial goal:
+
+1.  Writing documents that are format agnostic --- i.e. observe our
+    source in different ways
+
+or as described in the Wikipedia-article on *Markup Languages*
+
+> Descriptive markup
+>
+> Markup is used to label parts of the document rather than to provide
+> specific instructions as to how they should be processed. Well-known
+> examples include LaTeX, HTML, and XML. The objective is to decouple
+> the inherent structure of the document from any particular treatment
+> or rendition of it. Such markup is often described as \"semantic\".
+
+Oleg Kiselyov might want to argue that such a markup is even *symantic*
+(TODO: add reference).
+
+### TODO
+
+Maybe we should mention the the idea of XML is/was exactly that:
+
+(From [this
+website](https://docs.microsoft.com/en-us/sql/relational-databases/xml/compare-typed-xml-to-untyped-xml)):
+
+> An XML schema provides the following:
+>
+> -   **Validation constraints**: Whenever a typed xml instance is
+>     assigned to or modified, SQL Server validates the instance.
+>
+> -   **Data type information**: Schemas provide information about the
+>     types of attributes and elements in the xml data type instance.
+>     The type information provides more precise operational semantics
+>     to the values contained in the instance than is possible with
+>     untyped xml. For example, decimal arithmetic operations can be
+>     performed on a decimal value, but not on a string value. Because
+>     of this, typed XML storage can be made significantly more compact
+>     than untyped XML.
+
+Overview
+--------
+
+In this paper we will start with introducing `HSMLX` --- a variant of
+typed `XML` that uses S-expressions as its syntax --- and we will write
+first contructors and observers for it in Haskell/Scala. (\...)
+
+Writing interpreters for typed mark-up
+--------------------------------------
+
+In this chapter we will write two representations for `HSXML`, compare
+their advantages and disadvantages, and in the end try to come up with
+an encoding that uses the strengths of both to overcome their
+shortcomings.
+
+### HSXML
+
+Let us first have a look, with what kind of data we are dealing with.
+
+```xml
+<block>
+  <h1>Todo List</h1>
+  <items>
+    <item>Finish term paper</item>
+    <item>Reimplemented HSXML</item>
+  </items>
+</block>
+```
+
+```haskell
+(block [ h1 "Todo List"
+       , items [
+
+```
+
+(Some introduction to `HSXMLS`)
+
+### Initial Representation
+
+### Final Representation
+
+### Ad-hoc polymorphism to the rescue **or** Final encoding with class
+
+The decoding problem / No homo!
+-------------------------------

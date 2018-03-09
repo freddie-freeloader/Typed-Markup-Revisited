@@ -1,0 +1,135 @@
+* Re-Relevant
+** It's really just an extensible fold
+
+- Describe list as an interface/algebra?
+
+** Deriving ~Monoid~ and ~IsString~ instances
+
+- Would this be possible?
+- Less boilerplate
+- Show before vs. after
+  
+* Relevant
+** Describe relationship to fold
+  
+- Maybe have a tree with functions at nodes (as a graphic) and then have to
+  arrows to two interpretations of the tree 
+  
+** Dependencies of algebras
+  
+- Probably not too relevant for this paper
+- How to encode dependencies of algebras?
+  In Scala done via intersection types.
+  Probably just ~instance DepAttribute a => OpenAlg~
+  
+** Relationship to mtl
+
+- ~MonadGenDoc~
+* Misc
+** Implicit Passing of Algebras
+
+[[https://oleksandrmanzyuk.wordpress.com/2014/06/18/from-object-algebras-to-finally-tagless-interpreters-2/][This article]] describes how closely *Object Algebras* and *Finally Tagless* are
+related.
+
+Since type-classes are implicitly passed records, can we bring *Object Algebras*
+even closer to *Finally Tagless* with *implicit function types*? Do we get any
+advantages out of that? There is at least one major disadvantage: We can not
+have to algebras with the same carrier type.
+
+** Algebra Combinators
+
+Are there combinators defined for algebras in the *Finally Tagless* paper?
+
+** Bubbling Up of Needed Algebras
+
+*Data Types a la carte* makes transparent, which algebras are used in the
+expression. Is this in anyway possible with Church-encoded expressions?
+Maybe with implicit algebras? Do we need to leave a free spot for other
+algebras? So that we have a stack of algebras at the end (row polymorphism)?
+
+#+BEGIN_QUOTE
+The difference is that in Haskell there is no need to make MulAlg a subclass of
+ExpAlg: we can define it as a separate type class:
+
+#+BEGIN_SRC 
+class MulAlg t where
+    mul :: t -> t -> t
+#+END_SRC
+
+and then expressions containing multiplication will be represented by values of the type (ExpAlg t, MulAlg t) => t. This gives us more flexibility because we can represent different language extensions as separate typeclasses that can be arbitrarily combined. 
+#+END_QUOTE
+
+So obviously the usages of type classes also bubble up and do not get lost in
+the types. But what is the advantage of *Data Types a la carte* then?
+
+==> ~{-# ContstraintKinds #-}~
+[[https://www.youtube.com/watch?v=JxC1ExlLjgw][Video about finally tagless]]
+
+** From Church to ADT
+   
+Are there advantages of ADTs over Church-encoded values?
+
+** Data types a la carte is shit
+
+*Final tagless* is much better:
+- Performance
+- Light encoding
+  
+** Finally Tagless for (Free) Monads
+   
+*Data types a la carte* shows that one can also use it for (free) Monads. 
+[[https://www.youtube.com/watch?v=JxC1ExlLjgw][Video about finally tagless]] also tells us that MTL is related to *Final tagless*.
+
+** Abandon case class ADT encoding
+   
+Use *final tagless* (Boehm-Berarducci-Encoding) instead!
+
+We know, that we can encode ADTs as BB-encoded. So we can translate patterns,
+that use ADTs into BB-encoding.
+
+** We we should abandon ADTs and give BB-encoding better syntax
+  
+- Giving types names in signatures (like done in Idris) is already helping a lot
+
+** Subtyping over BB-encoded values
+   
+- ~(Lit : (Int -> a)) -> a~ is subtype of ~(Lit : (Int -> a)) -> (Add : (a -> a
+  -> a)) -> a~
+
+** Row Polymorphism for Algebras
+
+We can also do structural subtyping on algebras.
+
+** Visitor Correspondence
+
+- Free is an external visitor
+- Tagless is an internal visitor
+
+** Merge to algebras in Tagless?
+ 
+Is it possible to do: ~expr :: (String, Int)~?
+
+** Stack-safe Tagless?
+
+Would it be possible to make Tagless stack-safe? Especially for Scala this might
+be important.
+
+** Monomorphism restrictions in Scala?
+** De-serialization really solved?
+   
+- It seems that ~fromTree~ definition for ~Mul~ is dependent explicitly on
+  the other definition of ~fromTree~ (page 12)
+** Describing Context Blindness
+
+- In Church in encoding pattern-matching is hard and leads to context blindness
+- To solve this elegantly should also be are part of solving the expression problem
+- They say: Compositionality is context-insensitivity
+  "the structure is recursive, but not structurally inductive
+** Final encoding is as powerful as GADTS
+   
+- We are not only competing with ADTs, we also can outperform GADTs
+* Implemented Ideas
+** ConstraintKinds Pragma
+
+~type Ring v = (Adds v, Multiplies v)~
+~ringsExp :: Ring v => v~

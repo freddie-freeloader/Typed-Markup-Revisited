@@ -1,0 +1,26 @@
+name: typed-prosa
+version: 0.0.0
+synopsis: TBA
+description: TBA
+license: MIT
+copyright: No one
+author: Morty Smith <morty@smith.net>
+maintainer: Rick Sanchez <rick@sanchez.net>
+
+ghc-options: -Wall -fno-warn-name-shadowing
+
+default-extensions:
+  - DuplicateRecordFields
+  - NoMonomorphismRestriction
+  - OverloadedStrings
+  
+dependencies:
+ - base == 4.*
+ - megaparsec == 6.*
+ - bytestring == 0.10.8.*
+ - text == 1.2.*
+ - mtl == 2.2.*
+ - flow == 1.0.*
+
+library:
+  source-dirs: src

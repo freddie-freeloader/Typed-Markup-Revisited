@@ -1,0 +1,7 @@
+* Questions
+  
+** Achieving first class polymorphism
+   
+- They tuple trick (~instance (Expr e, Expr e' ) => Expr (e,e')~) is not too
+  bad, but the footnote on page 10 of the tutorial suggests that we can do
+  better

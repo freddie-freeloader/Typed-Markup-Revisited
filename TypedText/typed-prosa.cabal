@@ -1,0 +1,41 @@
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 53147f97f09ea6b9a063a57a4c4f1ae8cb7974df08f107e07315100c98921560
+
+name:           typed-prosa
+version:        0.0.0
+synopsis:       TBA
+description:    TBA
+author:         Morty Smith <morty@smith.net>
+maintainer:     Rick Sanchez <rick@sanchez.net>
+copyright:      No one
+license:        MIT
+build-type:     Simple
+cabal-version:  >= 1.10
+
+library
+  hs-source-dirs:
+      src
+  default-extensions: DuplicateRecordFields NoMonomorphismRestriction OverloadedStrings
+  ghc-options: -Wall -fno-warn-name-shadowing
+  build-depends:
+      base ==4.*
+    , bytestring ==0.10.8.*
+    , flow ==1.0.*
+    , megaparsec ==6.*
+    , mtl ==2.2.*
+    , text ==1.2.*
+  exposed-modules:
+      CommonMark
+      Context
+      FinalFTEncoding
+      FirstFTEncoding
+      PandocEncoding
+      Typed
+      TypedZero
+      Utils
+  other-modules:
+      Paths_typed_prosa
+  default-language: Haskell2010
