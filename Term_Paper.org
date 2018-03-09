@@ -55,7 +55,7 @@ Oleg Kiselyov might want to argue that such a markup is even /symantic/ (TODO:
 add reference).
 
 *** TODO
-
+    
 Maybe we should mention the the idea of XML is/was exactly that:
 
 (From [[https://docs.microsoft.com/en-us/sql/relational-databases/xml/compare-typed-xml-to-untyped-xml][this website]]):
@@ -75,43 +75,63 @@ An XML schema provides the following:
   untyped XML.  
 #+END_QUOTE
 
-** Introduction/Motivation
+** Introduction
 **** TODO Explanation
 (Explain variants/constructors versus writers/observations)
 In this chapter we will give a quick overview on the challenges related to the
-representation of markup languages. We will not concern ourselves on how the
-end-user will construct such in expressions. But to give a short comment on that
-matter: If we construct our intermediate representation, this could either be
-constructed directly in the host language as an (shallow/deep?) embedded DSL or
-we could write some parsers that create our representation in an automated way
-and hide therefore the implementation details from the user.
+representation of markup languages. 
+
+We will not concern ourselves on how the end-user will construct such
+expressions, but to provide a short comment on that matter: If we construct our
+intermediate representation, this could either be constructed directly in the
+host language as an (shallow/deep?) embedded DSL or we could write some parsers
+that create our representation in an automated way and hide therefore the
+implementation details from the user. In the tutorial paper Kiselyov et al. show
+that the flexible extensibility of the representation leads to the flexible
+extensibility of the corresponding parsers.
 
 
-*** Extensible Observers
+*** AST-encoding with Extensible Observers
 
 Pandoc achieves the separation of input and output format by choosing an
-Algebraic Data Type as its intermediate representation.
-We will quickly sketch why such an encoding leads to an easy extensibility of
-constructors with the following example:
+Algebraic Data Type as its intermediate representation. We will quickly sketch
+why such an encoding leads to an easy extensibility of constructors by looking a
+subset of Pandoc's Abstract Syntax Tree and writing some observers for it.
     
-Given the representation [AST Definition] we can write /writers/ that interpret
-this data in different ways [Markdown & LaTeX/HTML Observer]. So in the dimension of
-observers our encoding is obviously extensible.
+Given the representation [ref. AST Definition] we can write /writers/ that
+interpret this data in different ways [ref. Markdown & LaTeX/HTML Observer]. So
+in the dimension of observers our encoding is obviously extensible.
+
+Now we can construct a tree in the host language and interpret it in two
+different ways:
 
 [Example without ~IsString~ instance]
-    
-We can make our life a bit easier by adding an instance for ~IsString~ for our
-output data types. This injects ~String~ automatically into our data-types by
-applying ~fromString~ to it.
-
-[Code for instance declaration]
-
-The code from above is now much more concise.
-
 #+NAME: AST Definition
 #+BEGIN_SRC haskell :session pandocRepl
 groceryList :: [Doc]
 groceryList
+  = [ Heading 1  [Str "Grocery list"]
+    , BulletList [ Paragraph [Str "1 Banana"]
+                 , Paragraph [Str "2 ", Emph [Str "fresh"], Str " Apples"]]]
+#+END_SRC
+
+We can make our life a bit easier by adding an instance for ~IsString~ for our
+output data types. This injects ~String~ automatically into our data-types by
+applying ~fromString~ to it.
+
+#+NAME: AST Definition
+#+BEGIN_SRC haskell :session pandocRepl
+instance IsString Inline where
+  fromString = Str
+#+END_SRC
+
+
+The code from above is now even more concise.
+
+#+NAME: AST Definition
+#+BEGIN_SRC haskell :session pandocRepl
+groceryListShort :: [Doc]
+groceryListShort
   = [ Heading 1  ["Grocery list"]
     , BulletList [ Paragraph ["1 Banana"]
                  , Paragraph ["2 ", Emph ["fresh"], " Apples"]]]
@@ -120,26 +140,26 @@ groceryList
 *** Extensible Variants
 
 The encoding works very well, as long as we have foreseen every variant we might
-want to create. But as soon as we want to add a new kind of node (e.g. inline
-source code) we have a problem. If we have access to the ADT-definition we
-could add this new node, but this would break all existing observers that were
-written for the original ADT.
+want to create. But as soon as we want to add a new kind of node (e.g. a node
+representing the em dash) we are out of luck. Even if we have access to the
+original ADT-definition and we could add this new node, this would break all
+existing observers that were written for the original ADT.
     
 *** Expression Problem
 
 To be extensible in the dimension of observers as well as the dimension of the
-variants and still guarantee statically their compatibility is quite a
-challenge and one that quite common when writing software. It first was
-described by Wadler [reference] and many solutions have been proposed.
+variants, while still guaranteeing statically their compatibility, is quite a
+challenge and one that quite common when writing software. It was named as the
+*Expression Problem* by Wadler [reference] and many solutions have been proposed.
 
-The most prominent solutions — that can be implemented in Haskell — are
-described in /Data-types a la carte/ [reference] and in /Finally Tagless …/
-[reference]. Kiselyov’s et al. solution to this is both easy to use and when
-used as a DSL for our particular problem, the relationship to S-expressions
+The most prominent solutions — that are right at home in Haskell — are described
+in /Data-types a la carte/ [reference] and in /Finally Tagless …/ [reference].
+Kiselyov’s et al. solution to this is — in our opinion — both easy to use and
+when used as a DSL for our particular problem, the relationship to S-expressions
 becomes quite obvious.
     
 **** TODO Tag code and reference
-
+     
 Code is from
 [[https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs]]
 #+NAME: AST Definition
@@ -184,18 +204,29 @@ inlineToLaTex :: Inline -> LaTeX
 
 *** Final Tagless Encoding
 
-Our first attempt to encode our document in the final tagless encoding will
-loose the distinction between ~Doc~ and ~Inline~ — which was enforced by the
-Pandoc-encoding. But later we will see that we able to recover that property
-quite easily [and see how easy it is to enforce these kind of properties with
-our new encoding].
+Our first attempt to encode our document in the final tagless encoding will not
+have the distinction between ~Doc~ and ~Inline~ — which was enforced by the
+Pandoc-encoding. But later we will see that we are able to recover that property
+quite easily with great extensibility properties.
 
 The basic idea of the final tagless encoding is as follows:
 
-- Create a type class that specifies all our constructors as functions
+- Create a type class that specifies all our constructors in Church encoding
+  [ref. first code snippet]
 - Parametrize over the return-type and recursive fields of those constructors
+  [ref. the first encoding (from ~FirstFTEncoding.hs~)]
 
-In practice we gain the following encoding of our document format:
+#+NAME: First FT-encoding — Classes
+#+BEGIN_SRC haskell :session firstStepFT
+class Doc where
+  paragraph  :: [String] -> String
+  bulletList :: [String] -> String
+  heading    :: Int -> [String] -> String
+
+class Inline String where
+  str :: String -> String
+  emph :: [String] -> String
+#+END_SRC
 
 #+NAME: First FT-encoding — Classes
 #+BEGIN_SRC haskell :session firstFTEncoding
@@ -208,7 +239,18 @@ class Inline a where
   str :: String -> a
   emph :: [a] -> a
 #+END_SRC
-  
+
+Out type classes look basically like a GADT-encoding where all recursive
+occurences and the return-type are parametrized over.
+
+The observers will now be instances of theses type classes. The reader might
+notice that we cannot use the same carrier type for different interpretations of
+our AST — otherwise we would get overlapping instances. This can be quite easily
+solved by wrapping the carrier type into a ~newtype~ and add or derive the
+needed instances for it. In our case ~Markdown~ is simply a ~newtype~ of
+~String~. Therefore the instances for ~IsString~ and ~Monoid~ are
+straightforward to implement. [ Add information, on why we need ~Monoid~ ]
+
 #+NAME: First FT-encoding — Markdown
 #+BEGIN_SRC haskell :session firstFTEncoding
 instance Doc Markdown where
@@ -220,9 +262,6 @@ instance Inline Markdown where
   str = fromString
   emph texts = "*" `mappend` mconcat texts `mappend` "*"
 #+END_SRC
-
-It basically looks like a GADT-encoding where all recursive occurences and the
-return-type are parametrized over.
     
 Let's see how our example from above looks in our new encoding:
     
@@ -241,7 +280,7 @@ the ~OverloadedStrings~ language pragma. We do this be adding a constraint on
 the type classes, so every output format must have an ~IsString~ instance.
 
 Interestingly ~Doc~ has now no dependency on ~Inline~ anymore. In a way this is
-bad, since we can now construct the following:
+not ideal, since we can now construct the following:
 
 #+NAME: First FT-encoding — Markdown
 #+BEGIN_SRC haskell :session firstFTEncoding
@@ -265,15 +304,19 @@ will reflect which type classes (i.e. algebras) we used for constructing it:
 #+NAME: First FT-encoding — Markdown
 #+BEGIN_SRC haskell :session firstFTEncoding
 stylishText :: (Inline a, MoreStyles a) => a
-stylishText = strong [str "Green Tea"]
+stylishText = strong [str "Green Tea keeps me awake"]
 #+END_SRC
 
 That is why the type system can now statically tell us whether we can evaluate
-~stylishText~ to a particular type. If we wanted to evaluate 
-
+~stylishText~ to a particular type. If we wanted to evaluate an expression, that
+uses constructors that belong to a type class ~X~ and we would want to evaluate
+the expression to some carrier type ~C~, ~C~ has to be instance of ~X~. Since
+this is a static property, it can be decided at compile time.
 
 *** Recover Context Awareness
 
+To regain the context awareness of the Pandoc encoding, we add another field
+~ctx~ to our ~Doc~ wrapper.
 
 
 

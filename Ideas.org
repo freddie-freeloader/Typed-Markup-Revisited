@@ -129,7 +129,8 @@ be important.
    
 - We are not only competing with ADTs, we also can outperform GADTs
 * Implemented Ideas
-** ConstraintKinds Pragma
+** DONE ConstraintKinds Pragma
+   CLOSED: [2018-03-09 Fr 15:57]
 
 ~type Ring v = (Adds v, Multiplies v)~
 ~ringsExp :: Ring v => v~

@@ -37,9 +37,16 @@ inlineToCMARK EmDash = "---"
 
 groceryList :: [Doc]
 groceryList
+  = [ Heading 1  [Str "Grocery list"]
+    , BulletList [ Paragraph [Str "1 Banana"]
+                 , Paragraph [Str "2 ", Emph [Str "fresh"], Str " Apples"]]]
+
+groceryListShort :: [Doc]
+groceryListShort
   = [ Heading 1  ["Grocery list"]
     , BulletList [ Paragraph ["1 Banana"]
                  , Paragraph ["2 ", Emph ["fresh"], " Apples"] ]]
+
 
 -- Malformed doc
 -- badHeading = [ Heading 1 [Heading 2 ["foo"]] ]
