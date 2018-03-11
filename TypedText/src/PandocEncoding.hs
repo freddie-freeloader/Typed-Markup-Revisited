@@ -6,6 +6,7 @@ import           CommonMark
 import           Data.String
 import           Utils       (mconcatMap)
 
+main :: IO ()
 main = undefined
 
 data Block
@@ -36,9 +37,9 @@ addLineBreak text = text `mappend` "\n"
 
 inlineToCMark :: Inline -> CommonMark
 inlineToCMark (Str content)     = fromString content
-inlineToCMARK (Emph contents)   = "*" `mappend` mconcatMap inlineToCMark contents `mappend` "*"
-inlineToCMARK (Strong contents) = "**" `mappend` mconcatMap inlineToCMark contents `mappend` "**"
-inlineToCMARK EmDash            = "---"
+inlineToCMark (Emph contents)   = "*" `mappend` mconcatMap inlineToCMark contents `mappend` "*"
+inlineToCMark (Strong contents) = "**" `mappend` mconcatMap inlineToCMark contents `mappend` "**"
+inlineToCMark EmDash            = "---"
 
 -- LaTeX
 
@@ -70,6 +71,5 @@ groceryListShort
     , BulletList [ Paragraph ["1 Banana"]
                  , Paragraph ["2 ", Emph ["organic"], " Apples"] ]]
 
-
 -- Malformed doc
--- badHeading = [ Heading 1 [Heading 2 ["foo"]] ]
+-- badHeading = [ Heading 1  [ Heading 2 [ "Headingception!!"] ] ]

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 53147f97f09ea6b9a063a57a4c4f1ae8cb7974df08f107e07315100c98921560
+-- hash: 3d3974e0ae86310abae4bbfd425a0728047c520a376b6096709f44b806ed8d58
 
 name:           typed-prosa
 version:        0.0.0
@@ -29,12 +29,9 @@ library
     , text ==1.2.*
   exposed-modules:
       CommonMark
-      Context
       FinalFTEncoding
       FirstFTEncoding
       PandocEncoding
-      Typed
-      TypedZero
       Utils
   other-modules:
       Paths_typed_prosa

@@ -9,6 +9,7 @@ module FirstFTEncoding where
 import           Data.String
 import CommonMark
 
+main :: IO ()
 main = undefined
 
 -- Doc Attributes defined using ConstraintKinds

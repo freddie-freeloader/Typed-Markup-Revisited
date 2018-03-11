@@ -16,6 +16,7 @@ module FinalFTEncoding where
 
 import Data.String
 
+main :: IO ()
 main = undefined
 
 -- Doc definitions
