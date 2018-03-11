@@ -22,8 +22,10 @@ main = undefined
 
 type DocAtts doc = (Monoid doc, IsString doc)
 
-data DocWithCtx ctx doc where
-  DocWithCtx :: DocAtts doc => doc -> DocWithCtx ctx doc
+newtype DocWithCtx ctx doc = DocWithCtx doc
+
+  -- Haskell does nothing useful with this restriction...
+  -- docwithctx :: docatts doc => doc -> docwithctx ctx doc
   -- record version with caveats mentioned below
   -- DocWithCtx :: DocAtts doc => { getDoc :: doc } -> DocWithCtx ctx doc
 
@@ -108,7 +110,7 @@ instance Styles CommonMark where
 groceryList
   = [ heading 1  ["Grocery list"]
     , bulletList [ paragraph ["1 Banana"]]
-                 , paragraph ["2 ", emph ["fresh"], " Apples"] ]
+                 , paragraph ["2 ", emph ["organic"], " Apples"] ]
 
 forgetCtx :: DocWithCtx ctx doc -> doc
 forgetCtx (DocWithCtx doc) = doc

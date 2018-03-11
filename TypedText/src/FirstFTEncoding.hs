@@ -12,12 +12,11 @@ import CommonMark
 main = undefined
 
 -- Doc Attributes defined using ConstraintKinds
-type DocAtts doc = (Monoid doc, IsString doc)
+type DocConstraint doc = (Monoid doc, IsString doc)
 
-data Doc doc where
-  Doc :: DocAtts doc => doc -> Doc doc
+newtype Doc doc = Doc doc
 
-instance DocAtts doc => -- Have to restrict for the use of 'mempty'
+instance DocConstraint doc => -- Have to restrict for the use of 'mempty'
   Monoid (Doc doc) where
   mappend (Doc doc1) (Doc doc2) = Doc $ doc1 `mappend` doc2
   mempty = Doc mempty
@@ -29,7 +28,7 @@ class Block a where
   bulletList ::        [Doc a] -> Doc a
   heading    :: Int -> [Doc a] -> Doc a
 
-class DocAtts a =>
+class DocConstraint a =>
   Inline a where
   emDash ::           Doc a
   str    :: String -> Doc a
@@ -46,10 +45,12 @@ instance (Inline doc) => IsString (Doc doc) where
 
 instance Block CommonMark where
   paragraph     = mconcat
-  bulletList    = addLineBreak . mconcat . map (mappend "\n- ")
-  heading level = addLineBreak . mappend (mconcat $ replicate level "#") . mconcat
+  bulletList    = addLineBreak . mconcat . map (mappend "- ")
+  heading level = addLineBreak . mappend headingPrefix . mconcat
+   where
+    headingPrefix = mconcat $ replicate level "#"
 
-addLineBreak :: DocAtts doc => doc -> doc
+addLineBreak :: DocConstraint doc => doc -> doc
 addLineBreak text = text `mappend` "\n"
 
 instance Inline CommonMark where
@@ -63,7 +64,7 @@ instance Styles CommonMark where
 groceryList
   = [ heading 1  ["Grocery list"]
     , bulletList [ paragraph ["1 Banana"]]
-                 , paragraph ["2 ", emph ["fresh"], " Apples"] ]
+                 , paragraph ["2 ", emph ["organic"], " Apples"] ]
 
 badHeading = [ heading 1  [ heading 2 [ "Headingception!!"] ] ]
 

@@ -1,0 +1,11 @@
+* To-dos
+** Misc improvements
+*** TODO Explain how the contexts are defined
+     
+- Empty data declarations
+*** TODO Add example: Context independent construct
+- Is there one?
+*** TODO Context-aware vs. Context-sensitive
+*** TODO Add notion of Algebras?
+- Should we introduce the notion of algebras?
+

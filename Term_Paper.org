@@ -1,3 +1,9 @@
+#+TITLE: HSXML/Typed Markup Revisited
+#+SUBTITLE: Final encoding for extensible markup languages
+#+AUTHOR: Jonas U. Benn
+#+EMAIL: mail@benn.in
+#+LATEX_CLASS: article
+#+OPTIONS: tasks:nil
 
 * Final encoding for extensible markup languages
   
@@ -51,10 +57,12 @@ document from any particular treatment or rendition of it. Such markup is often
 described as "semantic".
 #+END_QUOTE
 
-Oleg Kiselyov might want to argue that such a markup is even /symantic/ (TODO:
-add reference).
+Oleg Kiselyov might want to argue that such a markup is even /symantic/.
+**** TODO Add reference
 
-*** TODO
+                
+                
+**** TODO Explain relationship to XML with schema
     
 Maybe we should mention the the idea of XML is/was exactly that:
 
@@ -98,43 +106,48 @@ Algebraic Data Type as its intermediate representation. We will quickly sketch
 why such an encoding leads to an easy extensibility of constructors by looking a
 subset of Pandoc's Abstract Syntax Tree and writing some observers for it.
     
-Given the representation [ref. AST Definition] we can write /writers/ that
-interpret this data in different ways [ref. Markdown & LaTeX/HTML Observer]. So
+Given the representation [[code:Pandoc_AST_Definition]] we can write /observers/ that
+interpret this data in different ways [[code:Pandoc_Observers]]. So
 in the dimension of observers our encoding is obviously extensible.
 
 Now we can construct a tree in the host language and interpret it in two
 different ways:
 
-[Example without ~IsString~ instance]
-#+NAME: AST Definition
+#+CAPTION: First Example Verbose
+#+NAME: code:Pandoc_Example_Verbose
 #+BEGIN_SRC haskell :session pandocRepl
-groceryList :: [Doc]
+groceryList :: [Block]
 groceryList
-  = [ Heading 1  [Str "Grocery list"]
+  = [ Heading 1  [ Str "Grocery list"]
     , BulletList [ Paragraph [Str "1 Banana"]
-                 , Paragraph [Str "2 ", Emph [Str "fresh"], Str " Apples"]]]
+                 , Paragraph [Str "2 ", Emph [Str "organic"], Str " Apples"]]]
+
+groceryListCM :: CommonMark
+groceryListCM = mconcatMap docToCMark groceryList
+
+groceryListLaTeX :: LaTeX
+groceryListLaTeX = mconcatMap docToLaTeX groceryList
 #+END_SRC
 
 We can make our life a bit easier by adding an instance for ~IsString~ for our
-output data types. This injects ~String~ automatically into our data-types by
+representation. This injects ~String~ automatically into our data types by
 applying ~fromString~ to it.
 
-#+NAME: AST Definition
 #+BEGIN_SRC haskell :session pandocRepl
 instance IsString Inline where
   fromString = Str
 #+END_SRC
 
 
-The code from above is now even more concise.
+Our initial definition is now even more concise:
 
-#+NAME: AST Definition
+#+NAME: code:Pandoc_Example_Short
 #+BEGIN_SRC haskell :session pandocRepl
-groceryListShort :: [Doc]
+groceryListShort :: [Block]
 groceryListShort
-  = [ Heading 1  ["Grocery list"]
+  = [ Heading 1  [ "Grocery list"]
     , BulletList [ Paragraph ["1 Banana"]
-                 , Paragraph ["2 ", Emph ["fresh"], " Apples"]]]
+                 , Paragraph ["2 ", Emph ["organic"], " Apples"] ]]
 #+END_SRC
 
 *** Extensible Variants
@@ -158,44 +171,44 @@ Kiselyov’s et al. solution to this is — in our opinion — both easy to use 
 when used as a DSL for our particular problem, the relationship to S-expressions
 becomes quite obvious.
     
-**** TODO Tag code and reference
-     
-Code is from
-[[https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs]]
-#+NAME: AST Definition
+#+CAPTION: This is part of the pandoc AST modulo EmDash
+#+NAME: code:Pandoc_AST_Definition
 #+BEGIN_SRC haskell :session pandocEncoding
-data Doc
-  = Paragraph [Inline]    -- ^ Paragraph
-  | BulletList [Doc]      -- ^ Bullet list (list of items, each a list
-                          --   of blocks)
-  | Heading Int [Inline]  -- ^ Heading - level (integer) and text (inlines)
+data Block
+  = Paragraph   [Inline] -- ^ Paragraph
+  | BulletList  [Block]    -- ^ Bullet list (list of items, each a block)
+  | Heading Int [Inline] -- ^ Heading - level (integer) and text (inlines)
 
 data Inline
-  = Str String    -- ^ Text (string)
-  | Emph [Inline] -- ^ Emphasized text (list of inlines)
+  = Str String      -- ^ Text (string)
+  | EmDash          -- ^ em dash
+  | Emph   [Inline] -- ^ Emphasized text (list of inlines)
+  | Strong [Inline] -- ^ Strongly emphasized text (list of inlines)
 #+END_SRC
     
-#+NAME: Pandoc-encoding — Markdown Observer
+#+CAPTION: Pandoc-encoding — Markdown Observer
+#+NAME: code:Pandoc_Observers
 #+BEGIN_SRC haskell :session pandocEncoding
-type Markdown = String
+docToCMark :: Block -> CommonMark
+docToCMark (Paragraph text)     = mconcatMap inlineToCMark text
+docToCMark (BulletList docs)    = addLineBreak $ mconcatMap (mappend "- " . docToCMark) docs
+docToCMark (Heading level text) = addLineBreak $ headingPrefix `mappend` mconcatMap inlineToCMark text
+ where
+  headingPrefix = mconcat $ replicate level "#"
 
-docToMd :: Doc -> Markdown
-docToMd (Paragraph text) = concatMap inlineToMd text
-docToMd (BulletList docs) = concatMap (("- " ++) . docToMd) docs ++ "\n"
-docToMd (Heading level text) = headingPrefix ++ concatMap inlineToMd text
-  where
-    headingPrefix = concat $ replicate level "#"
+addLineBreak :: CommonMark -> CommonMark
+addLineBreak text = text `mappend` "\n"
 
-inlineToMd :: Inline -> Markdown
-inlineToMd (Str content) = content
-inlineToMd (Emph contents) = "*" ++ concatMap inlineToMd contents ++ "*"
+inlineToCMark :: Inline -> CommonMark
+inlineToCMark (Str content)     = fromString content
+inlineToCMARK (Emph contents)   = "*" `mappend` mconcatMap inlineToCMark contents `mappend` "*"
+inlineToCMARK (Strong contents) = "**" `mappend` mconcatMap inlineToCMark contents `mappend` "**"
+inlineToCMARK EmDash            = "---"
 #+END_SRC
 
 #+NAME: Pandoc-encoding — LaTeX Observer
 #+BEGIN_SRC haskell :session pandocEncoding
-type LaTeX = String
-
-docToLaTex :: Doc -> LaTeX
+docToLaTex :: Block -> LaTeX
 ...
 
 inlineToLaTex :: Inline -> LaTeX
@@ -212,36 +225,62 @@ quite easily with great extensibility properties.
 The basic idea of the final tagless encoding is as follows:
 
 - Create a type class that specifies all our constructors in Church encoding
-  [ref. first code snippet]
+  [[code:First_Step_FT-encoding]]
 - Parametrize over the return-type and recursive fields of those constructors
-  [ref. the first encoding (from ~FirstFTEncoding.hs~)]
+  [[code:Second_Step_FT-encoding]]
 
-#+NAME: First FT-encoding — Classes
+#+CAPTION: First Step FT-encoding
+#+NAME: code:First_Step_FT-encoding
 #+BEGIN_SRC haskell :session firstStepFT
-class Doc where
-  paragraph  :: [String] -> String
-  bulletList :: [String] -> String
-  heading    :: Int -> [String] -> String
+data Doc where
+  Doc :: String -> Doc
 
-class Inline String where
-  str :: String -> String
-  emph :: [String] -> String
-#+END_SRC
+instance Monoid (Doc doc) where
+  mappend (Doc doc1) (Doc doc2) = Doc $ doc1 `mappend` doc2
+  mempty = Doc mempty
 
-#+NAME: First FT-encoding — Classes
-#+BEGIN_SRC haskell :session firstFTEncoding
-class Doc a where
-  paragraph  :: [a] -> a
-  bulletList :: [a] -> a
-  heading    :: Int -> [a] -> a
+-- Constructors
+
+class Block where
+  paragraph  ::        [Doc] -> Doc
+  bulletList ::        [Doc] -> Doc
+  heading    :: Int -> [Doc] -> Doc
 
 class Inline a where
-  str :: String -> a
-  emph :: [a] -> a
+  emDash ::           Doc
+  str    :: String -> Doc
+  str = Doc
 #+END_SRC
 
-Out type classes look basically like a GADT-encoding where all recursive
-occurences and the return-type are parametrized over.
+#+CAPTION: Second Step FT-encoding
+#+NAME: code:Second_Step_FT-encoding
+#+BEGIN_SRC haskell :session firstFTEncoding
+-- DocConstraint defined using ConstraintKinds
+type DocConstraint doc = (Monoid doc, IsString doc)
+
+newtype Doc doc = Doc doc
+
+instance DocConstraint doc => -- Have to restrict for the use of 'mempty'
+  Monoid (Doc doc) where
+  mappend (Doc doc1) (Doc doc2) = Doc $ doc1 `mappend` doc2
+  mempty = Doc mempty
+
+-- Constructors
+
+class Block a where
+  paragraph  ::        [Doc a] -> Doc a
+  bulletList ::        [Doc a] -> Doc a
+  heading    :: Int -> [Doc a] -> Doc a
+
+class DocConstraint a =>
+  Inline a where
+  emDash ::           Doc a
+  str    :: String -> Doc a
+  str = Doc . fromString
+#+END_SRC
+
+The type classes look basically like a GADT-encoding where all recursive
+occurrences and the return-type are parametrized over.
 
 The observers will now be instances of theses type classes. The reader might
 notice that we cannot use the same carrier type for different interpretations of
@@ -251,21 +290,20 @@ needed instances for it. In our case ~Markdown~ is simply a ~newtype~ of
 ~String~. Therefore the instances for ~IsString~ and ~Monoid~ are
 straightforward to implement. [ Add information, on why we need ~Monoid~ ]
 
-#+NAME: First FT-encoding — Markdown
+#+NAME: First_FT_Instance
 #+BEGIN_SRC haskell :session firstFTEncoding
-instance Doc Markdown where
+instance Block CommonMark where
   paragraph     = mconcat
   bulletList    = addLineBreak . mconcat . map (mappend "\n- ")
-  heading level = addLineBreak . mappend (mconcat $ replicate level "#" ) . mconcat
+  heading level = addLineBreak . mappend (mconcat $ replicate level "#") . mconcat
 
-instance Inline Markdown where
-  str = fromString
-  emph texts = "*" `mappend` mconcat texts `mappend` "*"
+addLineBreak :: DocConstraint doc => doc -> doc
+addLineBreak text = text `mappend` "\n"
 #+END_SRC
     
 Let's see how our example from above looks in our new encoding:
     
-#+NAME: First FT-encoding — Markdown
+#+NAME: FT_example_verbose
 #+BEGIN_SRC haskell :session firstFTEncoding
 groceryList
   = [ heading 1  [str "Grocery list"]
@@ -282,7 +320,7 @@ the type classes, so every output format must have an ~IsString~ instance.
 Interestingly ~Doc~ has now no dependency on ~Inline~ anymore. In a way this is
 not ideal, since we can now construct the following:
 
-#+NAME: First FT-encoding — Markdown
+#+NAME: Malformed_heading
 #+BEGIN_SRC haskell :session firstFTEncoding
 badHeading = [ heading 1  [ heading 2 [str "Headingception!!"] ] ]
 #+END_SRC
@@ -291,7 +329,7 @@ As noted above, we lost the distinction between ~Doc~ and ~Inline~. But we also
 gained something — ~Doc~ can now be used without ~Inline~ and we can now also
 add new nodes without changing our original data types:
 
-#+NAME: First FT-encoding — Markdown
+#+NAME: MoreStyles
 #+BEGIN_SRC haskell :session firstFTEncoding
 class IsString a => MoreStyles a where
   strong :: [a] -> a
@@ -316,74 +354,40 @@ this is a static property, it can be decided at compile time.
 *** Recover Context Awareness
 
 To regain the context awareness of the Pandoc encoding, we add another field
-~ctx~ to our ~Doc~ wrapper.
+~ctx~ to our ~Doc~ wrapper [[code:Context-aware_wrapper]]. The ~ctx~ is a
+phantom/proxy (?) type and with its help, we can specify in which context a
+constructor can be used.
 
+As shown before, the first /Final Tagless encoding/ had the disadvantage, that
+we could construct a heading inside another heading. To prohibit this, the
+~heading~ constructor has the following context-aware definition:
 
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-** Overview
-   
-   In this paper we will start with introducing ~HSMLX~ — a variant of typed ~XML~
-that uses S-expressions as its syntax — and we will write first constructors and
-observers for it in Haskell.
-
-*** SXML
-
-Basically ~SXML~ is just 
-    
-** Writing interpreters for typed mark-up
-
-In this chapter we will write two representations for ~HSXML~, compare their
-advantages and disadvantages, and in the end try to come up with an encoding
-that uses the strengths of both to overcome their shortcomings.
-
-*** HSXML
-
-Let us first have a look, with what kind of data we are dealing with.
-
-#+BEGIN_SRC xml
-<block>
-  <h1>Todo List</h1>
-  <items>
-    <item>Finish term paper</item>
-    <item>Reimplemented HSXML</item>
-  </items>
-</block>
+#+CAPTION: Context-aware heading
+#+NAME: code:Context-aware_heading
+#+BEGIN_SRC haskell :session firstFTEncoding
+heading :: Int -> [DocWithCtx InlineCtx doc] -> DocWithCtx BlockCtx doc
 #+END_SRC
 
-#+BEGIN_SRC haskell
-(block [ h1 "Todo List"
-       , items [
+The type signature states, that the function expects a ~DocWithCtx~-wrapper in
+the ~InlineCtx~-context and returns a wrapper in the ~BlockCtx~-context. With
+this refined signature a heading inside a heading will be rejected by the type
+system.
 
+The set of available contexts should be defined generously, since all
+independent extensions of the AST should agree on them. This is obviously are
+restriction — but one that might be very valuable.
+
+It is still possible to create context independent constructors. This can be
+achieved by parametrizing over the context:
+
+#+CAPTION: Context-independent wrapper
+#+NAME: code:Context-independent_constructor
+#+BEGIN_SRC haskell :session firstFTEncoding
+qed :: DocWithCtx ctx doc
 #+END_SRC
 
-(Some introduction to ~HSXMLS~)
-
-*** Initial Representation
-*** Final Representation
-*** Ad-hoc polymorphism to the rescue *or* Final encoding with class
-
-** The decoding problem / No homo!
+#+CAPTION: Context-aware wrapper
+#+NAME: code:Context-aware_wrapper
+#+BEGIN_SRC haskell :session firstFTEncoding
+newtype DocWithCtx ctx doc = DocWithCtx doc
+#+END_SRC
