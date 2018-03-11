@@ -1,5 +1,5 @@
 * To-dos
-** Misc improvements
+** TODO Misc improvements [0/4]
 *** TODO Explain how the contexts are defined
      
 - Empty data declarations
