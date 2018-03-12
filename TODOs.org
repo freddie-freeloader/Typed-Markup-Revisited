@@ -1,5 +1,5 @@
 * To-dos
-** TODO Misc [0/5]
+** TODO Misc [0/8]
 *** TODO Write conclusion
 *** TODO Explain how the contexts are defined
 - Empty data declarations
