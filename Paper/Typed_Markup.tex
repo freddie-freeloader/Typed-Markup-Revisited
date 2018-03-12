@@ -116,14 +116,13 @@
 \label{sec:orgc140eeb}
 
 In the age of digital documents, an author of content is confronted with the
-question which document format to choose [when it comes to text].
-
-Since every document format has its advantages, one might not want to commit to
-a specific format to soon. A series of blog posts might turn into a book (or at
-least a pretty typeset \texttt{pdf}) or an author might want to give the reader the
-freedom to read their text on differently sized displays — if the reader has
-ever tried to read a paper in \texttt{pdf}-format on an e-book reader, no further
-motivation might be needed.
+question which document format to choose. Since every document format has its
+advantages, one might not want to commit to a specific format to soon. \\
+A series of blog posts might turn into a book (or at least a pretty typeset
+\texttt{pdf}) or an author might want to give the reader the freedom to read
+their text on differently sized displays — if the reader has ever tried to read
+a paper in \texttt{pdf}-format on an e-book reader, no further motivation might
+be needed.
 
 Luckily the problem of decoupling initial text from output seems to be solved by
 the rise of markup languages such as Markdown/Commonmark and alike. These type
@@ -169,7 +168,7 @@ described as "semantic".
 
 Oleg Kiselyov might want to argue that such a markup is even \emph{symantic}.
 
-\section{?}
+\section{to be named}
 \label{sec:org7537ecb}
 \subsection{AST-encoding with Extensible Observers}
 \label{sec:org5f9818b}
@@ -180,7 +179,7 @@ why such an encoding leads to an easy extensibility of constructors by looking a
 subset of Pandoc's Abstract Syntax Tree and writing some observers for it.
 
 Given the representation (Figure \ref{Pandoc_AST}) we can write \emph{observers}
-that interpret this data in different ways (Figure \ref{org0b814ca}). So in the
+that interpret this data in different ways (Figure \ref{Pandoc_Views}). So in the
 dimension of observers our encoding is obviously extensible.
 
 Now we can construct a tree in the host language and interpret it in two
@@ -260,7 +259,7 @@ docToLaTex :: Block -> LaTeX
 inlineToLaTex :: Inline -> LaTeX
 ...
 \end{lstlisting}
-\captionof{figure}{\label{org0b814ca}
+\captionof{figure}{\label{Pandoc_Views}
 Pandoc-encoding — Markdown Observer}
 \end{figure}
 
@@ -371,7 +370,7 @@ our AST — otherwise we would get overlapping instances. This can be quite easi
 solved by wrapping the carrier type into a \texttt{newtype} and add or derive the
 needed instances for it. In our case \texttt{Markdown} is simply a \texttt{newtype} of
 \texttt{String}. Therefore the instances for \texttt{IsString} and \texttt{Monoid} are
-straightforward to implement. [ Add information, on why we need \texttt{Monoid} ]
+straightforward to implement.
 
 \begin{lstlisting}
 instance Block CommonMark where
@@ -394,7 +393,6 @@ groceryList
                  , paragraph [str "2 ", emph [str "fresh"], str " Apples"] ]
 \end{lstlisting}
 
-[ Write something about \texttt{NoMonomorphismRestriction} ]
 
 As before, we can automate the injection of \texttt{String} into our encoding by using
 the \texttt{OverloadedStrings} language pragma. We do this be adding a constraint on
