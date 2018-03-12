@@ -4,7 +4,7 @@ This is still *work in progress*.
   
 ** Paper
    
-Currently the paper is worked on in [[file:Term_Paper.org][Term_Paper.org]].
+Currently the paper is worked on in [[file:Paper/Typed_Markup.tex]].
 
 ** Code
    

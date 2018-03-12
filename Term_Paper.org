@@ -6,7 +6,7 @@
 #+OPTIONS: tasks:nil
 
 * Final encoding for extensible markup languages
-  
+
 ** Abstract
 
 In the age of digital documents, an author of content is confronted with the
@@ -22,7 +22,7 @@ motivation might be needed.
 Luckily the problem of decoupling initial text from output seems to be solved by
 the rise of markup languages such as Markdown/Commonmark and alike. These type
 of documents can be easily [transpiled/converted] into all sorts of output
-formats by programs as ~pandoc~. 
+formats by programs as ~pandoc~.
 
 If the reader has no objections to such a publishing system, they might read no
 further and write away their next /format-agnostic/ document. But if they are
@@ -60,10 +60,10 @@ described as "semantic".
 Oleg Kiselyov might want to argue that such a markup is even /symantic/.
 **** TODO Add reference
 
-                
-                
+
+
 **** TODO Explain relationship to XML with schema
-    
+
 Maybe we should mention the the idea of XML is/was exactly that:
 
 (From [[https://docs.microsoft.com/en-us/sql/relational-databases/xml/compare-typed-xml-to-untyped-xml][this website]]):
@@ -80,14 +80,14 @@ An XML schema provides the following:
   instance than is possible with untyped xml. For example, decimal arithmetic
   operations can be performed on a decimal value, but not on a string value.
   Because of this, typed XML storage can be made significantly more compact than
-  untyped XML.  
+  untyped XML.
 #+END_QUOTE
 
 ** Introduction
 **** TODO Explanation
 (Explain variants/constructors versus writers/observations)
 In this chapter we will give a quick overview on the challenges related to the
-representation of markup languages. 
+representation of markup languages.
 
 We will not concern ourselves on how the end-user will construct such
 expressions, but to provide a short comment on that matter: If we construct our
@@ -105,7 +105,7 @@ Pandoc achieves the separation of input and output format by choosing an
 Algebraic Data Type as its intermediate representation. We will quickly sketch
 why such an encoding leads to an easy extensibility of constructors by looking a
 subset of Pandoc's Abstract Syntax Tree and writing some observers for it.
-    
+
 Given the representation [[code:Pandoc_AST_Definition]] we can write /observers/ that
 interpret this data in different ways [[code:Pandoc_Observers]]. So
 in the dimension of observers our encoding is obviously extensible.
@@ -157,7 +157,7 @@ want to create. But as soon as we want to add a new kind of node (e.g. a node
 representing the em dash) we are out of luck. Even if we have access to the
 original ADT-definition and we could add this new node, this would break all
 existing observers that were written for the original ADT.
-    
+
 *** Expression Problem
 
 To be extensible in the dimension of observers as well as the dimension of the
@@ -170,7 +170,7 @@ in /Data-types a la carte/ [reference] and in /Finally Tagless …/ [reference].
 Kiselyov’s et al. solution to this is — in our opinion — both easy to use and
 when used as a DSL for our particular problem, the relationship to S-expressions
 becomes quite obvious.
-    
+
 #+CAPTION: This is part of the pandoc AST modulo EmDash
 #+NAME: code:Pandoc_AST_Definition
 #+BEGIN_SRC haskell :session pandocEncoding
@@ -185,7 +185,7 @@ data Inline
   | Emph   [Inline] -- ^ Emphasized text (list of inlines)
   | Strong [Inline] -- ^ Strongly emphasized text (list of inlines)
 #+END_SRC
-    
+
 #+CAPTION: Pandoc-encoding — Markdown Observer
 #+NAME: code:Pandoc_Observers
 #+BEGIN_SRC haskell :session pandocEncoding
@@ -300,9 +300,9 @@ instance Block CommonMark where
 addLineBreak :: DocConstraint doc => doc -> doc
 addLineBreak text = text `mappend` "\n"
 #+END_SRC
-    
+
 Let's see how our example from above looks in our new encoding:
-    
+
 #+NAME: FT_example_verbose
 #+BEGIN_SRC haskell :session firstFTEncoding
 groceryList
@@ -310,7 +310,7 @@ groceryList
     , bulletList [ paragraph [str "1 Banana"]]
                  , paragraph [str "2 ", emph [str "fresh"], str " Apples"] ]
 #+END_SRC
-    
+
 [ Write something about ~NoMonomorphismRestriction~ ]
 
 As before, we can automate the injection of ~String~ into our encoding by using
@@ -337,7 +337,7 @@ class IsString a => MoreStyles a where
 #+END_SRC
 
 Not only can we now mix those node types at will, but the type of an expression
-will reflect which type classes (i.e. algebras) we used for constructing it: 
+will reflect which type classes (i.e. algebras) we used for constructing it:
 
 #+NAME: First FT-encoding — Markdown
 #+BEGIN_SRC haskell :session firstFTEncoding
