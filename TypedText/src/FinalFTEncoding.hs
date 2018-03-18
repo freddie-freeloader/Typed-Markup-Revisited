@@ -1,20 +1,32 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE ConstraintKinds           #-}
+{-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE EmptyDataDecls            #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE OverloadedStrings         #-}
+{-# LANGUAGE Rank2Types                #-}
+{-# LANGUAGE TypeFamilies              #-}
+{-# LANGUAGE TypeSynonymInstances      #-}
 
-module FinalFTEncoding where
+module FinalFTEncoding ( DocAtts
+                       , DocWithCtx(..)
+                       , InlineCtx
+                       , BlockCtx
+                       , FromBlock (..)
+                       , FromInline (..)
+                       , Block (..)
+                       , Inline (..)
+                       , Styles (..)
+                       , CommonMark (..)
+                       , renderCommonMark
+                       ) where
 
-import Data.String
+import           CommonMark
+import           Data.String
 
 main :: IO ()
 main = undefined
@@ -40,7 +52,7 @@ instance DocAtts doc => -- Have to restrict for the use of 'mempty'
   mappend (DocWithCtx doc1) (DocWithCtx doc2) = DocWithCtx $ doc1 `mappend` doc2
   mempty = DocWithCtx mempty
 
--- Contexts
+-- Context definitions
 
 data InlineCtx
 data BlockCtx
@@ -78,25 +90,15 @@ class Styles doc where
   emph   :: [DocWithCtx InlineCtx doc] -> DocWithCtx InlineCtx doc
   strong :: [DocWithCtx InlineCtx doc] -> DocWithCtx InlineCtx doc
 
-{-- Make 'CommonMark' a 'Doc' -}
-
-newtype CommonMark =
-  CommonMark String
-  deriving (Show)
-
-instance Monoid CommonMark where
-  mappend (CommonMark l) (CommonMark r) = CommonMark $ l ++ r
-  mempty = CommonMark ""
-
-instance IsString CommonMark where
-  fromString = CommonMark
+----------------------------
+-- Make 'CommonMark' instance of algebras
+--
 
 instance Block CommonMark where
   paragraph = fromInline . mconcat
   bulletList = addLineBreak . mconcat . map (mappend (fromInline "\n- "))
   heading level = addLineBreak . fromInline . mappend (mconcat $ replicate level "#") . mconcat
 
--- Should not have to write 'Doc doc'. Is this a compiler bug?
 addLineBreak :: DocAtts doc => DocWithCtx ctx doc -> DocWithCtx ctx doc
 addLineBreak (DocWithCtx doc) = DocWithCtx $ doc `mappend` "\n"
 
@@ -107,6 +109,10 @@ instance Styles CommonMark where
   emph   texts = "*"  `mappend` mconcat texts `mappend` "*"
   strong texts = "**" `mappend` mconcat texts `mappend` "**"
 
+------------
+-- Examples
+--
+
 -- groceryList :: (Block doc, Style doc, Inline doc) => [DocWithCtx BlockCtx doc]
 groceryList
   = [ heading 1  ["Grocery list"]
@@ -116,8 +122,11 @@ groceryList
 forgetCtx :: DocWithCtx ctx doc -> doc
 forgetCtx (DocWithCtx doc) = doc
 
+renderCommonMark :: DocWithCtx ctx CommonMark -> CommonMark
+renderCommonMark = forgetCtx
+
 renderedGroceryList :: CommonMark
-renderedGroceryList = mconcat $ map forgetCtx groceryList
+renderedGroceryList = mconcat $ map renderCommonMark groceryList
 
 -- Malformed doc
 -- badHeading = [ heading 1 [heading 2 ["foo"]] ]
