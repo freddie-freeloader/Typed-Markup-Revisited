@@ -1,5 +1,4 @@
 \section{Introduction}
-\label{sec:orgc140eeb}
 
 \subsection{Motivation}
 
@@ -8,15 +7,14 @@ question which document format to choose. Since every document format has its
 advantages, one might not want to commit to a specific format to soon.
 
 A series of blog posts might turn into a book or at least a pretty typeset
-\emph{pdf}. An author might want to give the reader the freedom to read
-their text on differently sized displays — if the reader has ever tried to read
-a paper in \emph{pdf}-format on an e-book reader, no further motivation might
-be needed.
+\emph{pdf}. An author might want to give the reader the freedom to read their
+text on differently sized displays—if the reader has ever tried to read a paper
+in \emph{pdf}-format on an e-book reader, no further motivation might be needed.
 
-Luckily the problem of decoupling initial text from output seems to be solved by
-the rise of markup languages such as Markdown and alike. These type of documents
-can be easily compiled into all sorts of output formats by programs as
-\emph{Pandoc} \cite{pandoc}.
+Luckily the problem of decoupling the initial document from output seems to be
+solved by the rise of markup languages such as Markdown and alike. These types
+of documents can be easily compiled into all sorts of output formats by programs
+as \emph{Pandoc} \cite{pandoc}.
 
 If the reader has no objections to such a publishing system, they might read no
 further and write away their next \emph{format-agnostic} document. But if they
@@ -29,7 +27,7 @@ they may find the findings gathered in this paper worth while.
 This paper mostly outlines the ideas of the work on \emph{HSXML: Typed SXML}
 \cite{hsxml} and the underlying idea of \emph{Finally Tagless Interpreters}
 \cite{finally-tagless, finally-tagless-tut}.\\
-The \emph{final tagless encoding} is a solution to the expression problem
+The \emph{tagless-final style} is a solution to the expression problem
 \cite{expression-problem}. It is closely related to the problem at hand, in that
 it is concerned with the simultaneous extension of syntactic variants and
 interpretations of them. This can be seen as an extensibility in two dimensions
@@ -37,17 +35,17 @@ interpretations of them. This can be seen as an extensibility in two dimensions
 
 \subsection{?}
 
-In short a \emph{final tagless encoded} representation of documents like
+In short a \emph{tagless-final encoded} representation of documents like
 \emph{HSXML} has in our opinion two major advantages over markup languages such
 as Pandoc’s internal one:
 
 \begin{enumerate}
 \item Guarantee the well-formedness of the document by construction
-\item Easy extensibility without loosing the guarantees of 1.
+\item Easy and full extensibility without loosing the guarantees of 1.
 \end{enumerate}
 
 While having these two advantages we still do not want to loose perspective and
-be true to our initial goal:
+solve to our initial goal:
 
 \begin{enumerate}
 \item Writing documents that are format agnostic—i.e. observe our source in
@@ -67,14 +65,12 @@ often described as "semantic".
 \end{quote}
 
 \section{Extensibility of Markup Representations}
-\label{sec:org7537ecb}
 \subsection{Extensible Observers}
-\label{sec:org5f9818b}
 
 Pandoc achieves the separation of input and output format by choosing an
 algebraic data type (ADT) as its intermediate representation. We will quickly
 sketch why such an encoding leads to an easy extensibility of constructors by
-looking a subset of Pandoc's Abstract Syntax Tree and writing some
+looking a subset of Pandoc's abstract syntax tree (AST) and writing some
 \emph{observers} for it.
 
 Given the representation (Figure \ref{Pandoc_AST}) we can write observers that
@@ -159,26 +155,25 @@ docToLaTex :: Block -> LaTeX
 
 inlineToLaTex :: Inline -> LaTeX
 ...
+
+deleteme$
 \end{lstlisting}
 \captionof{figure}{\label{Pandoc_Views}
 Observers of ADT encoding}
 \end{figure}
 
-
 \clearpage
 
 \subsection{Extensible Variants}
-\label{sec:orgccbaf12}
 
 The simple ADT encoding works very well, as long as we have foreseen every
 variant we might want to create. But as soon as we want to add a new kind of
-variant (e.g. a node representing the em dash) we are out of luck. Even if we
+variant—e.g. a node representing the em dash—we are out of luck. Even if we
 have access to the original ADT-definition and we could add this new variant,
 this would break all existing observers that were written for the original set
 of variants.
 
 \subsection{Relationship to the Expression Problem}
-\label{sec:orgb21dca4}
 
 To be extensible in the dimension of observers as well as the dimension of the
 variants—while still guaranteeing statically their compatibility—is quite a
@@ -193,15 +188,14 @@ et al. solution to this is, in our opinion, both easy to use and the notation
 for constructing AST is extremely similar to the ADT-encoded one.
 
 
-\section{Simple Final Tagless Encoding}
-\label{sec:org6195637}
+\section{Simple Tagless-Final Encoding}
 
-Our first attempt to encode our document in the final tagless encoding will not
+Our first attempt to encode our document in the tagless-final encoding will not
 have the distinction between \texttt{Doc} and \texttt{Inline}—which was enforced
 by the Pandoc-encoding. But later we will see that we are able to recover that
 property quite easily with great extensibility properties.
 
-The basic idea of the final tagless encoding is as follows:
+The basic idea of the TF encoding is as follows:
 
 \begin{itemize}
 \item Create a type class that specifies all our constructors in Church [add
@@ -268,17 +262,17 @@ occurrences and the return-type are parametrized over.
 
 The observers will now be instances of theses type classes. The reader might
 notice that we cannot use the same carrier type for different interpretations of
-our AST — otherwise we would get overlapping instances. This can be quite easily
+our AST—otherwise we would get overlapping instances. This can be quite easily
 solved by wrapping the carrier type into a \emph{newtype} and add or derive the
 needed instances for it. In our case \texttt{Markdown} is simply a
 \emph{newtype} of \texttt{String}. Therefore the instances for \texttt{IsString}
 and \texttt{Monoid} are straightforward to implement.
 
-Figure \ref{FT_Observer} shows the implementation of an observer in the final
-tagless encoding. The implementation is really similar the one in the
-ADT encoding. But if we have close look, we can see that in Church encoding our
-observers do not need to be called recursive explicitly. This makes both our
-code simpler and extensible.
+Figure \ref{FT_Observer} shows the implementation of an observer in the
+tagless-final encoding. The implementation is really similar the one in the ADT
+encoding. But if we have close look, we can see that—since our data type is
+Church encoded—the observers do not need to be called recursive explicitly. This
+makes both our code simpler and is essential for extensibility.
 
 \begin{figure}
 \begin{lstlisting}
@@ -312,7 +306,7 @@ instance Styles LaTeX where
 ...
 \end{lstlisting}
 \captionof{figure}{\label{FT_Observer}
-Observer implementation in the final tagless encoding}
+Observer implementation in the tagless-final encoding}
 \end{figure}
 
 
@@ -380,7 +374,6 @@ We can avoid this by either supplying the generalized type signature—as done
 above—or using the language pragma \emph{NoMonomorphismRestriction}.
 
 \section{Recover Context Awareness}
-\label{sec:org5ba4b2b}
 
 To regain the context awareness of the Pandoc encoding, we add another field
 named \texttt{ctx} to our \texttt{Doc} wrapper (Figure \ref{ContextWrapper}).
@@ -394,7 +387,7 @@ data InlineCtx
 data BlockCtx
 \end{lstlisting}
 
-As shown before, the first Final Tagless encoding had the disadvantage, that we
+As shown before, the first tagless-final encoding had the disadvantage, that we
 could construct a heading inside another heading. To prohibit this, the
 \texttt{heading} constructor has the following context-aware definition:
 
@@ -447,8 +440,8 @@ We presented two different encodings that we can choose from for representing a
 markup language. While the ADT encoding might look like the tool for the job, we
 have seen that it has some serious limitations. If we do not want to commit to a
 set of variants forever and do not want to break other people's observers by
-changing the ADT definition—the final tagless approach might be a good solution
-for our instance of the \emph{Expression Problem}.
+changing the ADT definition—the tagless-final approach might be a good solution
+also for this instance of the \emph{Expression Problem}.
 
 For those who want to study this approach in more depth—the lecture notes on
 \emph{Typed Tagless Final Interpreters} \cite{finally-tagless-tut} are a great

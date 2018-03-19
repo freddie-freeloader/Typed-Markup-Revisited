@@ -1,14 +1,19 @@
 \begin{abstract}
-  This paper is mostly a case study [for/on] the final tagless approach—which is
-  a solution for the \emph{Expression Problem}. We describe how the final
-  tagless encoding can help to create truly extensible representations for
-  markup documents. This is not a new finding and was first used in the Haskell
-  project HSXML.
+  This paper is mostly a case study of the tagless-final style—which is a
+  solution to the \emph{Expression Problem}. We describe how the tagless-final
+  (TF) encoding can help to create truly extensible representations for markup
+  documents. This is not a new finding and was first used in the Haskell project
+  \emph{HSXML}.
 
-  We provide a comparison of the FT-encoding with the ADT-encoding that Pandoc
-  is using and describe the essential implementation techniques that HSXML is
-  using to create a context aware encoding. This context aware FT-encoding has
-  great potential for creating a representation that is not only extensible but
-  also provides a lot of guarantees in regards to the well-formedness of the
-  resulting abstract syntax trees.
+  We provide a comparison of the tagless-final encoding with the \emph{algebraic
+    data type} encoding—that \emph{Pandoc} is using—and describe the essential
+  implementation techniques that HSXML’s implementation is based on, to create a
+  context aware encoding. This \emph{context aware tagless-final encoding} has
+  great potential for creating a representation, that is
+  \begin{itemize}
+  \item truly extensible—i.e. in the dimension of \emph{variants} and the
+    dimension of \emph{observers}
+  \item provides strong guarantees in regards to the well-formedness of the
+    created abstract syntax trees
+  \end{itemize}
 \end{abstract}
