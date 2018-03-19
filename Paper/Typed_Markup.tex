@@ -93,7 +93,7 @@
 
 \acmPrice{}
 \date{\today}
-\title[Draft for *HSXML Revisited*]{Draft for *HSXML Revisited*}
+\title{Draft for *Typed Markup Revisited*}
 \hypersetup{
  pdfauthor={Jonas U. Benn},
  pdftitle={HSXML/Typed Markup Revisited},
@@ -111,25 +111,26 @@
 \lstset{language=Haskell}
 
 \maketitle
-%\tableofcontents
-
 
 \section{Introduction}
 \label{sec:orgc140eeb}
 
+\subsection{Motivation}
+
 In the age of digital documents, an author of content is confronted with the
 question which document format to choose. Since every document format has its
-advantages, one might not want to commit to a specific format to soon. \\
-A series of blog posts might turn into a book (or at least a pretty typeset
-\emph{pdf}) or an author might want to give the reader the freedom to read
+advantages, one might not want to commit to a specific format to soon.
+
+A series of blog posts might turn into a book or at least a pretty typeset
+\emph{pdf}. An author might want to give the reader the freedom to read
 their text on differently sized displays — if the reader has ever tried to read
 a paper in \emph{pdf}-format on an e-book reader, no further motivation might
 be needed.
 
 Luckily the problem of decoupling initial text from output seems to be solved by
 the rise of markup languages such as Markdown and alike. These type of documents
-can be easily compile into all sorts of output formats by programs as
-\emph{pandoc} \cite{pandoc}.
+can be easily compiled into all sorts of output formats by programs as
+\emph{Pandoc} \cite{Pandoc}.
 
 If the reader has no objections to such a publishing system, they might read no
 further and write away their next \emph{format-agnostic} document. But if they
@@ -137,17 +138,22 @@ are interested in how they can easily extend the representation of their
 document and let a type-checker reason about the \emph{well-formedness} of it,
 they may find the findings gathered in this paper worth while.
 
+\subsection{Type-safe extensibility}
+
 This paper mostly outlines the ideas of the work on \emph{HSXML: Typed SXML}
 \cite{hsxml} and the underlying idea of \emph{Finally Tagless Interpreters}
-\cite{finally-tagless}. The \emph{final tagless encoding} is a solution to the
-expression problem \cite{expression-problem}. It is closely related to the
-problem at hand, in that it is concerned with the simultaneous extension of
-syntactic variants and interpretations of them. This can be seen as
-an extensibility in two dimensions [add schema like in Object-oriented
-programming versus abstract data types].
+\cite{finally-tagless, finally-tagless-tut}.\\
+The \emph{final tagless encoding} is a solution to the expression problem
+\cite{expression-problem}. It is closely related to the problem at hand, in that
+it is concerned with the simultaneous extension of syntactic variants and
+interpretations of them. This can be seen as an extensibility in two dimensions
+[add schema like in Object-oriented programming versus abstract data types].
 
-In short a richly typed representation of documents like \emph{HSXML} has in our
-opinion two major advantages over markup languages such as Pandoc’s internal one:
+\subsection{?}
+
+In short a \emph{final tagless encoded} representation of documents like
+\emph{HSXML} has in our opinion two major advantages over markup languages such
+as Pandoc’s internal one:
 
 \begin{enumerate}
 \item Guarantee the well-formedness of the document by construction
@@ -169,12 +175,10 @@ Descriptive markup
 
 Markup is used to label parts of the document rather than to provide specific
 instructions as to how they should be processed. Well-known examples include
-\LaTeX{}, HTML, and XML. The objective is to decouple the inherent structure of the
-document from any particular treatment or rendition of it. Such markup is often
-described as "semantic".
+\LaTeX{}, HTML, and XML. The objective is to decouple the inherent structure of
+the document from any particular treatment or rendition of it. Such markup is
+often described as "semantic".
 \end{quote}
-
-Oleg Kiselyov might want to argue that such a markup is even \emph{symantic} \cite{finally-tagless-tut}.
 
 \section{Extensibility of Markup Representations}
 \label{sec:org7537ecb}
@@ -182,13 +186,14 @@ Oleg Kiselyov might want to argue that such a markup is even \emph{symantic} \ci
 \label{sec:org5f9818b}
 
 Pandoc achieves the separation of input and output format by choosing an
-Algebraic Data Type as its intermediate representation. We will quickly sketch
-why such an encoding leads to an easy extensibility of constructors by looking a
-subset of Pandoc's Abstract Syntax Tree and writing some observers for it.
+algebraic data type (ADT) as its intermediate representation. We will quickly
+sketch why such an encoding leads to an easy extensibility of constructors by
+looking a subset of Pandoc's Abstract Syntax Tree and writing some
+\emph{observers} for it.
 
-Given the representation (Figure \ref{Pandoc_AST}) we can write \emph{observers}
-that interpret this data in different ways (Figure \ref{Pandoc_Views}). So in the
-dimension of observers our encoding is obviously extensible.
+Given the representation (Figure \ref{Pandoc_AST}) we can write observers that
+interpret this data in different ways (Figure \ref{Pandoc_Views}). So in the
+dimension of observers an ADT encoding is obviously extensible.
 
 Now we can construct a tree in the host language and interpret it in two
 different ways:
@@ -208,9 +213,9 @@ groceryListLaTeX :: LaTeX
 groceryListLaTeX = mconcatMap docToLaTeX groceryList
 \end{lstlisting}
 
-We can make our life a bit easier by adding an instance for \emph{IsString} for our
-representation. This injects \emph{String} automatically into our data types by
-applying \emph{fromString} to it.
+We can make our life a bit easier by adding an instance for \texttt{IsString}
+for our representation. This injects \texttt{String} automatically into our data
+types by applying \texttt{fromString} to it.
 
 \begin{lstlisting}
 instance IsString Inline where
@@ -230,19 +235,19 @@ groceryListShort
 
 \begin{figure}
 \begin{lstlisting}
-  data Block
+data Block
   = Paragraph   [Inline] -- ^ Paragraph
-  | BulletList  [Block]    -- ^ Bullet list (list of items, each a block)
-  | Heading Int [Inline] -- ^ Heading - level (integer) and text (inlines)
+  | BulletList  [Block]  -- ^ Bullet list (list of items, each a block)
+  | Heading Int [Inline] -- ^ Heading - level (int) and text (inlines)
   
-  data Inline
+data Inline
   = Str String      -- ^ Text (string)
   | EmDash          -- ^ em dash
   | Emph   [Inline] -- ^ Emphasized text (list of inlines)
   | Strong [Inline] -- ^ Strongly emphasized text (list of inlines)
 \end{lstlisting}
 \captionof{figure}{\label{Pandoc_AST}
-This is part of the pandoc AST modulo EmDash}
+This is part of Pandoc’s ADT-encoded AST modulo \texttt{EmDash}}
 \end{figure}
 
 \begin{figure}
@@ -270,7 +275,7 @@ inlineToLaTex :: Inline -> LaTeX
 ...
 \end{lstlisting}
 \captionof{figure}{\label{Pandoc_Views}
-Pandoc-encoding — Markdown Observer}
+Observers of ADT encoding}
 \end{figure}
 
 
@@ -281,48 +286,47 @@ Pandoc-encoding — Markdown Observer}
 
 The simple ADT encoding works very well, as long as we have foreseen every
 variant we might want to create. But as soon as we want to add a new kind of
-node (e.g. a node representing the em dash) we are out of luck. Even if we have
-access to the original ADT-definition and we could add this new node, this would
-break all existing observers that were written for the original set of variants.
+variant (e.g. a node representing the em dash) we are out of luck. Even if we
+have access to the original ADT-definition and we could add this new variant,
+this would break all existing observers that were written for the original set
+of variants.
 
 \subsection{Relationship to the Expression Problem}
 \label{sec:orgb21dca4}
 
 To be extensible in the dimension of observers as well as the dimension of the
-variants, while still guaranteeing statically their compatibility, is quite a
+variants—while still guaranteeing statically their compatibility—is quite a
 challenge and one that is common when writing software. It was coined as the
 \emph{Expression Problem} by Wadler \cite{expression-problem} and many solutions
 have been proposed.
 
-The most prominent solutions — that are widely used the Haskell-ecosystem — are
+The most prominent solutions—that are widely used the Haskell-ecosystem—are
 described in \emph{Data-types a la carte} \cite{data-types-a-la-carte} and in
 \emph{Finally Tagless, Partially Evaluated} \cite{finally-tagless}. Kiselyov’s
-et al. solution to this is — in our opinion — both easy to use and when used as
-a DSL for our particular problem, the relationship to S-expressions becomes
-quite obvious.
+et al. solution to this is, in our opinion, both easy to use and the notation
+for constructing AST is extremely similar to the ADT-encoded one.
 
 
 \section{Simple Final Tagless Encoding}
 \label{sec:org6195637}
 
 Our first attempt to encode our document in the final tagless encoding will not
-have the distinction between \emph{Doc} and \emph{Inline} — which was enforced by the
-Pandoc-encoding. But later we will see that we are able to recover that property
-quite easily with great extensibility properties.
+have the distinction between \texttt{Doc} and \texttt{Inline}—which was enforced
+by the Pandoc-encoding. But later we will see that we are able to recover that
+property quite easily with great extensibility properties.
 
 The basic idea of the final tagless encoding is as follows:
 
 \begin{itemize}
-\item Create a type class that specifies all our constructors in Church encoding
-(Figure \ref{First_Step_FT})
-\item Parametrize over the return-type and recursive fields of those constructors
-(Figure \ref{Second_Step_FT})
+\item Create a type class that specifies all our constructors in Church [add
+  footnote with Böhm Berarducci citation] encoding (Figure \ref{First_Step_FT})
+\item Parametrize over the return-type and recursive fields of those
+  constructors (Figure \ref{Second_Step_FT})
 \end{itemize}
 
 \begin{figure}
 \begin{lstlisting}
-data Doc where
-  Doc :: String -> Doc
+data Doc = Doc String
 
 instance Monoid (Doc doc) where
   mappend (Doc doc1) (Doc doc2) = Doc $ doc1 `mappend` doc2
@@ -380,19 +384,51 @@ The observers will now be instances of theses type classes. The reader might
 notice that we cannot use the same carrier type for different interpretations of
 our AST — otherwise we would get overlapping instances. This can be quite easily
 solved by wrapping the carrier type into a \emph{newtype} and add or derive the
-needed instances for it. In our case \emph{Markdown} is simply a \emph{newtype} of
-\emph{String}. Therefore the instances for \emph{IsString} and \emph{Monoid} are
-straightforward to implement.
+needed instances for it. In our case \texttt{Markdown} is simply a
+\emph{newtype} of \texttt{String}. Therefore the instances for \texttt{IsString}
+and \texttt{Monoid} are straightforward to implement.
 
+Figure \ref{FT_Observer} shows the implementation of an observer in the final
+tagless encoding. The implementation is really similar the one in the
+ADT encoding. But if we have close look, we can see that in Church encoding our
+observers do not need to be called recursive explicitly. This makes both our
+code simpler and extensible.
+
+\begin{figure}
 \begin{lstlisting}
-instance Block Markdown where
-  paragraph     = mconcat
-  bulletList    = addLineBreak . mconcat . map (mappend "\n- ")
-  heading level = addLineBreak . mappend (mconcat $ replicate level "#") . mconcat
+-- Implement Markdown observer
 
-addLineBreak :: DocConstraint doc => doc -> doc
-addLineBreak text = text `mappend` "\n"
+instance Block Markdown where
+  paragraph = fromInline . mconcat
+  bulletList = addLineBreak . mconcat . map (mappend (fromInline "\n- "))
+  heading level = addLineBreak . fromInline . mappend (mconcat $ replicate level "#") . mconcat
+
+addLineBreak :: DocAtts doc => DocWithCtx ctx doc -> DocWithCtx ctx doc
+addLineBreak (DocWithCtx doc) = DocWithCtx $ doc `mappend` "\n"
+
+instance Inline Markdown where
+  emDash = "---"
+
+instance Styles Markdown where
+  emph   texts = "*"  `mappend` mconcat texts `mappend` "*"
+  strong texts = "**" `mappend` mconcat texts `mappend` "**"
+
+
+-- Implement LaTeX observer
+
+instance Block LaTeX where
+...
+
+instance Inline LaTeX where
+...
+
+instance Styles LaTeX where
+...
 \end{lstlisting}
+\captionof{figure}{\label{FT_Observer}
+Observer implementation in the final tagless encoding}
+\end{figure}
+
 
 \clearpage
 
@@ -408,50 +444,63 @@ groceryList
 \end{lstlisting}
 
 
-As before, we can automate the injection of \emph{String} into our encoding by using
-the \emph{OverloadedStrings} language pragma. We do this be adding a constraint on
-the type classes, so every output format must have an \emph{IsString} instance.
+As before, we can automate the injection of \texttt{String} into our encoding by
+using the \texttt{OverloadedStrings} language pragma. We do this be adding a
+constraint on the type classes, so every output format (i.e. carrier type) must
+have an \texttt{IsString} instance.
 
-Interestingly \emph{Doc} has now no dependency on \emph{Inline} anymore. In a way this is
-not ideal, since we can now construct the following:
+Interestingly \texttt{Doc} has now no dependency on \texttt{Inline} anymore and
+we are now allowed to create the following AST:
 
 \begin{lstlisting}
 badHeading = [ heading 1  [ heading 2 [str "Headingception!!"] ] ]
 \end{lstlisting}
 
-As noted above, we lost the distinction between \emph{Doc} and \emph{Inline}. But we also
-gained something — \emph{Doc} can now be used without \emph{Inline} and we can now also
-add new nodes without changing our original data types:
+As noted above, we lost the distinction between \texttt{Doc} and
+\texttt{Inline}. But we also gained something—\emph{Doc} can now be used
+without \emph{Inline} and we can now also add new variants without changing our
+original variant definitions:
 
 \begin{lstlisting}
-class IsString a => MoreStyles a where
-  strong :: [a] -> a
-  strikethrough :: [a] -> a
+class Styles doc where
+  emph   :: [DocWithCtx InlineCtx doc] -> DocWithCtx InlineCtx doc
+  strong :: [DocWithCtx InlineCtx doc] -> DocWithCtx InlineCtx doc
 \end{lstlisting}
 
 Not only can we now mix those node types at will, but the type of an expression
 will reflect which type classes (i.e. algebras) we used for constructing it:
 
 \begin{lstlisting}
-stylishText :: (Inline a, MoreStyles a) => a
-stylishText = strong [str "Green Tea keeps me awake"]
+stylishNote :: (Inline a, Styles a) => a
+stylishNote = strong [str "Green Tea keeps me awake"]
 \end{lstlisting}
 
 That is why the type system can now statically tell us whether we can evaluate
-\emph{stylishText} to a particular type. If we wanted to evaluate an expression, that
-uses constructors that belong to a type class \emph{X} and we would want to evaluate
-the expression to some carrier type \emph{C}, \emph{C} has to be instance of \emph{X}. Since
-this is a static property, it can be decided at compile time.
+\texttt{stylishNote} to a particular type.
 
+If we wanted to evaluate an expression, that uses constructors that belong to a
+type class \emph{X} and we would want to evaluate the expression to some carrier
+type \emph{C}, \emph{C} has to be instance of \emph{X}. Since this is a static
+property, it can be decided at compile time.
+
+\subsection{A short note on GHC’s Type Inference}
+
+When we define an AST like \texttt{stylishNote} GHC’s type inference might come
+in our way. If no type signature for \texttt{stylishNote} is supplied GHC will
+try to infer a concrete type for this definition and not the most generalized
+type.
+
+We can avoid this by either supplying the generalized type signature—as done
+above—or using the language pragma \emph{NoMonomorphismRestriction}.
 
 \section{Recover Context Awareness}
 \label{sec:org5ba4b2b}
 
 To regain the context awareness of the Pandoc encoding, we add another field
-\emph{ctx} to our \emph{Doc} wrapper \ref{ContextWrapper}. The \emph{ctx} is a
-phantom type and with its help, we can specify in which context a constructor
-can be used. Since phantom types are not materialized on the value level, we are
-simply using empty data declarations as context types.
+named \texttt{ctx} to our \texttt{Doc} wrapper (Figure \ref{ContextWrapper}).
+\texttt{ctx} is a phantom type and with its help we can specify in which
+context a constructor can be used. Since phantom types are not materialized on
+the value level, we are simply using empty data declarations as context types.
 
 \begin{lstlisting}
 -- Context definitions
@@ -459,28 +508,43 @@ data InlineCtx
 data BlockCtx
 \end{lstlisting}
 
-As shown before, the first \emph{Final Tagless encoding} had the disadvantage, that
-we could construct a heading inside another heading. To prohibit this, the
+As shown before, the first Final Tagless encoding had the disadvantage, that we
+could construct a heading inside another heading. To prohibit this, the
 \texttt{heading} constructor has the following context-aware definition:
 
 \begin{lstlisting}
-heading :: Int -> [DocWithCtx InlineCtx doc] -> DocWithCtx BlockCtx doc
+class Block doc where
+  heading :: Int -> [DocWithCtx InlineCtx doc] -> DocWithCtx BlockCtx doc
+  ...
 \end{lstlisting}
 
-The type signature states, that the function expects a \emph{DocWithCtx}-wrapper in
-the \emph{InlineCtx}-context and returns a wrapper in the \emph{BlockCtx}-context. With
-this refined signature a heading inside a heading will be rejected by the type
-system.
+The type signature states, that the function expects a
+\texttt{DocWithCtx}-wrapper in the \texttt{InlineCtx}-context and returns a
+wrapper in the \texttt{BlockCtx}-context. With this refined signature a heading
+inside a heading will be rejected by the type system.
+
+To convince Haskell’s type system that a conversion from \texttt{InlineCtx} to
+\texttt{BlockCtx} is possible, we can use the following type class:
+
+\begin{lstlisting}
+class FromInline ctx where
+  fromInline :: DocWithCtx InlineCtx doc -> DocWithCtx ctx doc
+  fromInline (DocWithCtx doc) = DocWithCtx doc
+
+instance FromInline BlockCtx
+\end{lstlisting}
+
 
 The set of available contexts should be defined generously, since all
 independent extensions of the AST should agree on them. This is obviously are
-restriction — but one that might be very valuable.
+restriction—but one that is intended.
 
-It is still possible to create context independent constructors. This can be
+It is also possible to create context independent constructors. This can be
 achieved by parametrizing over the context:
 
 \begin{lstlisting}
-qed :: DocWithCtx ctx doc
+class Math doc where
+  qed :: DocWithCtx ctx doc
 \end{lstlisting}
 
 \begin{figure}[t]
@@ -490,6 +554,10 @@ newtype DocWithCtx ctx doc = DocWithCtx doc
 \captionof{figure}{\label{ContextWrapper}
 Context-aware wrapper}
 \end{figure}
+
+\section{Conclusion}
+
+FT FTW
 
 \printbibliography
 

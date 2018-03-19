@@ -58,7 +58,7 @@ data InlineCtx
 data BlockCtx
 
 class FromInline ctx where
-  fromInline :: DocAtts doc => DocWithCtx InlineCtx doc -> DocWithCtx ctx doc
+  fromInline :: DocWithCtx InlineCtx doc -> DocWithCtx ctx doc
   fromInline (DocWithCtx doc) = DocWithCtx doc
 
 instance FromInline BlockCtx
@@ -113,7 +113,7 @@ instance Styles CommonMark where
 -- Examples
 --
 
--- groceryList :: (Block doc, Style doc, Inline doc) => [DocWithCtx BlockCtx doc]
+-- groceryList :: (Block doc, Styles doc, Inline doc) => [DocWithCtx BlockCtx doc]
 groceryList
   = [ heading 1  ["Grocery list"]
     , bulletList [ paragraph ["1 Banana"]]
