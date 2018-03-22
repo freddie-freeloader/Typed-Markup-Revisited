@@ -9,9 +9,8 @@ question which document format to choose. Since every document format has its
 advantages, one might not want to commit to a specific format to soon.
 
 A series of blog posts might turn into a book or at least a pretty typeset
-\emph{pdf}. An author might want to give the reader the freedom to read their
-text on differently sized displays—if the reader has ever tried to read a paper
-in \emph{pdf}-format on an e-book reader, no further motivation might be needed.
+\emph{pdf}. An author also might want to give the reader the freedom to read
+their text on different digital devices—e.g. mobile phones, tablets and e-readers.
 
 Luckily the problem of decoupling the initial document from output seems to be
 solved by the rise of markup languages such as Markdown and alike. These types
@@ -207,7 +206,7 @@ have the distinction between \texttt{Doc} and \texttt{Inline}—which was enforc
 by the Pandoc-encoding. But later we will see that we are able to recover that
 property quite easily with great extensibility properties.
 
-The basic idea of the TF encoding is as follows:
+The basic idea of the tagless-final encoding is as follows:
 
 \begin{itemize}
 \item Create a type class that specifies all our constructors in Church [add
@@ -218,7 +217,7 @@ The basic idea of the TF encoding is as follows:
 
 \begin{figure}
 \begin{lstlisting}
-data Doc = Doc String
+newtype Doc = Doc String
 
 instance Monoid (Doc doc) where
   mappend (Doc doc1) (Doc doc2) = Doc $ doc1 `mappend` doc2
@@ -242,10 +241,10 @@ First Step FT-encoding}
 
 \begin{figure}
 \begin{lstlisting}
+newtype Doc doc = Doc doc
+
 -- DocConstraint defined using ConstraintKinds
 type DocConstraint doc = (Monoid doc, IsString doc)
-
-newtype Doc doc = Doc doc
 
 instance DocConstraint doc => -- Have to restrict for the use of 'mempty'
   Monoid (Doc doc) where
@@ -450,10 +449,10 @@ Context-aware wrapper}
 
 We presented two different encodings that we can choose from for representing a
 markup language. While the ADT encoding might look like the tool for the job, we
-have seen that it has some serious limitations. If we do not want to commit to a
-set of variants forever and do not want to break other people's observers by
-changing the ADT definition—the tagless-final approach might be a good solution
-also for this instance of the \emph{Expression Problem}.
+have seen that it has some serious limitations. Especially if our set of
+variants might scale up and we would do not want to break other people's
+observers by changing the ADT definition—the tagless-final approach might be a
+good solution also for this instance of the \emph{Expression Problem}.
 
 For those who want to study this approach in more depth—the lecture notes on
 \emph{Typed Tagless Final Interpreters} \cite{finally-tagless-tut} are a great
