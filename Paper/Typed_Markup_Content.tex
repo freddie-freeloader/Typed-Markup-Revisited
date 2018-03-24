@@ -1,4 +1,6 @@
 \clearpage
+Blank
+\clearpage
 
 \section{Introduction}
 
@@ -13,9 +15,9 @@ A series of blog posts might turn into a book or at least a pretty typeset
 their text on different digital devices—e.g. mobile phones, tablets and e-readers.
 
 Luckily the problem of decoupling the initial document from output seems to be
-solved by the rise of markup languages such as Markdown and alike. These types
-of documents can be easily compiled into all sorts of output formats by programs
-as \emph{Pandoc} \cite{pandoc}.
+solved by the rise of markup languages such as Markdown and the like. These
+types of documents can be easily compiled into all sorts of output formats by
+programs such as \emph{Pandoc} \cite{pandoc}.
 
 If the reader has no objections to such a publishing system, they might read no
 further and write away their next \emph{format-agnostic} document. But if they
@@ -26,13 +28,14 @@ they may find the findings gathered in this paper worth while.
 \subsection{Type-safe extensibility}
 
 This paper mostly outlines the ideas of the work on \emph{HSXML: Typed SXML}
-\cite{hsxml} and the underlying idea of \emph{Finally Tagless Interpreters}
+\cite{hsxml} and its underlying approach of \emph{tagless-final style}
 \cite{finally-tagless, finally-tagless-tut}.\\
 The \emph{tagless-final style} is a solution to the expression problem
 \cite{expression-problem}. It is closely related to the problem at hand, in that
-it is concerned with the simultaneous extension of syntactic variants and
-interpretations of them. This can be seen as an extensibility in two dimensions
-[add schema like in Object-oriented programming versus abstract data types].
+it is concerned with the simultaneous extension of syntactic \emph{constructors} and
+interpretations of them—we call those \emph{observations}. This can be seen as an
+extensibility in two dimensions. For those unfamiliar with the the expression
+problem—section \ref{section_ep} provides a short introduction.
 
 \subsection{?}
 
@@ -65,6 +68,118 @@ the document from any particular treatment or rendition of it. Such markup is
 often described as "semantic".
 \end{quote}
 
+\clearpage
+
+\section{Background: The Expression Problem} \label{section_ep}
+
+If the reader is already familiar with the expression problem, they might just
+skip this section and read our case study in section
+\label{main_section}.
+
+\subsection{Definition}
+
+The following description of the expression problem is short and precise and
+stems from Zenger’s and Odersky’s paper \emph{Indepently Extensible Solutions to
+  the Expression Problem} \cite{indie_solutions}.
+
+\begin{quote}
+  Since software evolves over time, it is essential for software systems to be
+  extensible. But the development of extensible software poses many design and
+  implementation problems, especially if extensions cannot be anticipated. The
+  \emph{expression problem} is probably the most fundamental one among these
+  problems. It arises when recursively defined datatypes and operations on
+  these types have to be extended simultaneously.
+\end{quote}
+
+In this paper we call those \say{datatypes} \say{data variants} or short
+\say{variants} and the operations on them are called \say{observations}. This is
+inspired by \emph{Extensibility for the Masses} \cite{object_algebra}.
+
+\subsection{Expression Problem by Example}
+
+To get a better intuition on what the expression problem is really concerned
+with, we introduce a small example and will explain the meaning of the
+\emph{mystical dimensions} with its help. We will represent \emph{algebraic
+  expressions}, like e.g. $2+4 \cdot 3$, with two different encodings and will
+show what kind of extensibility they allow.
+
+\subsubsection{ADT encoding}
+
+When encoding algebraic expressions in \emph{algebraic data type (ADT)
+  encoding}, we could write this definitions:
+
+\begin{lstlisting}
+data Expr
+  = Lit Int
+  | Add Expr Expr
+\end{lstlisting}
+
+With the above code we defined two data variants—\emph{Lit} and \emph{Add}—and
+now we can write multiple observations on those variants easily:
+
+\begin{lstlisting} 
+eval :: Expr -> Int
+eval (Lit i)   = i
+eval (Add l r) = eval l + eval r
+
+pretty :: Expr -> String
+pretty (Lit i)   = show i
+pretty (Add l r) =
+     "(" ++ pretty l ++ ")"
+  ++ "+"
+  ++ "(" ++ pretty r ++ ")"
+\end{lstlisting}
+
+We assess that the ADT encoding is extensible in the dimension of observations.
+
+If we wanted to add another variant—e.g. one for negation—we would have to
+change not only the ADT definition but also all observations. This might be
+feasible as long as we feel comfortable with changing the original code. But as
+soon as someone else wrote observations depending on the original set of
+variants, we risk breaking compatibility.
+
+\subsubsection{OO encoding}
+If we wanted to ensure that our representation is extensible in the dimension of
+data variants, we could choose the \emph{object oriented (OO) encoding}.
+\begin{lstlisting}
+data ExprOO = Expr { evalThis :: Int
+                   , prettyThis :: String}
+
+newLit :: Int -> ExprOO
+newLit i = Expr i (show i)
+
+newAdd :: ExprOO -> ExprOO -> ExprOO
+newAdd l r = Expr evalResult prettyResult
+ where
+  evalResult   = evalThis l + evalThis r
+  prettyResult =
+       "(" ++ prettyThis l ++ ")"
+    ++ "+"
+    ++ "(" ++ prettyThis r ++ ")"
+
+exOO :: ExprOO
+exOO = newAdd (newLit 4) (newLit 2)
+
+evalExOO :: Int
+evalExOO = evalThis exOO
+
+newNeg :: ExprOO -> ExprOO
+newNeg e = Expr (- evalThis e) ("- " ++ prettyThis e)
+\end{lstlisting}
+
+\subsubsection{Church/Boehm-Berarducci encoding}
+
+Finally we will choose \emph{Boehm-Berarducci (BB) encoding} for our
+representation.
+
+Boehm and Berarducci used a technique, that is similar to Church
+encoding, to show that ADTs can be represented by using solely using function
+application and abstraction in \emph{System F} (i.e. polymorphic
+lambda-calculus) \cite{boehm_berarducci}.
+
+
+(Figure \ref{Expression_Problem})
+
 \vspace*{\fill}
 \begin{figure}
     \centering
@@ -76,17 +191,18 @@ Dimensions of the \emph{Expression Problem}}
 \clearpage
 
 \section{Extensibility of Markup Representations}
-\subsection{Extensible Observers}
+\label{main_section}
+\subsection{Extensible Observations}
 
 Pandoc achieves the separation of input and output format by choosing an
 algebraic data type (ADT) as its intermediate representation. We will quickly
 sketch why such an encoding leads to an easy extensibility of constructors by
 looking a subset of Pandoc's abstract syntax tree (AST) and writing some
-\emph{observers} for it.
+\emph{observations} for it.
 
-Given the representation (Figure \ref{Pandoc_AST}) we can write observers that
+Given the representation (Figure \ref{Pandoc_AST}) we can write observations that
 interpret this data in different ways (Figure \ref{Pandoc_Views}). So in the
-dimension of observers an ADT encoding is obviously extensible.
+dimension of observations an ADT encoding is obviously extensible.
 
 Now we can construct a tree in the host language and interpret it in two
 different ways:
@@ -170,27 +286,27 @@ inlineToLaTex :: Inline -> LaTeX
 deleteme$
 \end{lstlisting}
 \captionof{figure}{\label{Pandoc_Views}
-Observers of ADT encoding}
+Observations of ADT encoding}
 \end{figure}
 
 \clearpage
 
-\subsection{Extensible Variants}
+\subsection{Extensible constructors}
 
 The simple ADT encoding works very well, as long as we have foreseen every
-variant we might want to create. But as soon as we want to add a new kind of
-variant—e.g. a node representing the em dash—we are out of luck. Even if we
-have access to the original ADT-definition and we could add this new variant,
-this would break all existing observers that were written for the original set
-of variants.
+constructor we might want to create. But as soon as we want to add a new kind of
+constructor—e.g. a node representing the em dash—we are out of luck. Even if we
+have access to the original ADT-definition and we could add this new
+constructor, this would break all existing observations that were written for
+the original set of constructors.
 
 \subsection{Relationship to the Expression Problem}
 
-To be extensible in the dimension of observers as well as the dimension of the
-variants—while still guaranteeing statically their compatibility—is quite a
-challenge and one that is common when writing software. It was coined as the
-\emph{Expression Problem} by Wadler \cite{expression-problem} and many solutions
-have been proposed.
+To be extensible in the dimension of observations as well as the dimension of
+the constructors—while still guaranteeing statically their compatibility—is
+quite a challenge and one that is common when writing software. It was coined as
+the \emph{Expression Problem} by Wadler \cite{expression-problem} and many
+solutions have been proposed.
 
 The most prominent solutions—that are widely used the Haskell-ecosystem—are
 described in \emph{Data-types a la carte} \cite{data-types-a-la-carte} and in
@@ -271,7 +387,7 @@ Second Step FT-encoding}
 The type classes look basically like a GADT-encoding where all recursive
 occurrences and the return-type are parametrized over.
 
-The observers will now be instances of theses type classes. The reader might
+The observations will now be instances of theses type classes. The reader might
 notice that we cannot use the same carrier type for different interpretations of
 our AST—otherwise we would get overlapping instances. This can be quite easily
 solved by wrapping the carrier type into a \emph{newtype} and add or derive the
@@ -282,7 +398,7 @@ and \texttt{Monoid} are straightforward to implement.
 Figure \ref{FT_Observer} shows the implementation of an observer in the
 tagless-final encoding. The implementation is really similar the one in the ADT
 encoding. But if we have close look, we can see that—since our data type is
-Church encoded—the observers do not need to be called recursive explicitly. This
+Church encoded—the observations do not need to be called recursive explicitly. This
 makes both our code simpler and is essential for extensibility.
 
 \begin{figure}
@@ -349,8 +465,8 @@ badHeading = [ heading 1  [ heading 2 [str "Headingception!!"] ] ]
 
 As noted above, we lost the distinction between \texttt{Doc} and
 \texttt{Inline}. But we also gained something—\emph{Doc} can now be used
-without \emph{Inline} and we can now also add new variants without changing our
-original variant definitions:
+without \emph{Inline} and we can now also add new constructors without changing our
+original constructor definitions:
 
 \begin{lstlisting}
 class Styles doc where
@@ -369,10 +485,10 @@ stylishNote = strong [str "Green Tea keeps me awake"]
 That is why the type system can now statically tell us whether we can evaluate
 \texttt{stylishNote} to a particular type.
 
-If we wanted to evaluate an expression, that uses constructors that belong to a
-type class \emph{X} and we would want to evaluate the expression to some carrier
-type \emph{C}, \emph{C} has to be instance of \emph{X}. Since this is a static
-property, it can be decided at compile time.
+If we wanted to evaluate an expression that uses constructors that belong to a
+type class \emph{X} and evaluate the expression to some carrier type \emph{C},
+\emph{C} has to be instance of \emph{X}. Since this is a static property, it can
+be decided at compile time.
 
 \subsection{A short note on GHC’s Type Inference}
 
@@ -450,8 +566,8 @@ Context-aware wrapper}
 We presented two different encodings that we can choose from for representing a
 markup language. While the ADT encoding might look like the tool for the job, we
 have seen that it has some serious limitations. Especially if our set of
-variants might scale up and we would do not want to break other people's
-observers by changing the ADT definition—the tagless-final approach might be a
+constructors might scale up and we would do not want to break other people's
+observations by changing the ADT definition—the tagless-final approach might be a
 good solution also for this instance of the \emph{Expression Problem}.
 
 For those who want to study this approach in more depth—the lecture notes on
