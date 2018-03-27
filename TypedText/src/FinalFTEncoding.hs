@@ -21,11 +21,11 @@ module FinalFTEncoding ( DocAtts
                        , Block (..)
                        , Inline (..)
                        , Styles (..)
-                       , CommonMark (..)
+                       , Markdown (..)
                        , renderCommonMark
                        ) where
 
-import           CommonMark
+import           Markdown
 import           Data.String
 
 main :: IO ()
@@ -94,7 +94,7 @@ class Styles doc where
 -- Make 'CommonMark' instance of algebras
 --
 
-instance Block CommonMark where
+instance Block Markdown where
   paragraph = fromInline . mconcat
   bulletList = addLineBreak . mconcat . map (mappend (fromInline "\n- "))
   heading level = addLineBreak . fromInline . mappend (mconcat $ replicate level "#") . mconcat
@@ -102,10 +102,10 @@ instance Block CommonMark where
 addLineBreak :: DocAtts doc => DocWithCtx ctx doc -> DocWithCtx ctx doc
 addLineBreak (DocWithCtx doc) = DocWithCtx $ doc `mappend` "\n"
 
-instance Inline CommonMark where
+instance Inline Markdown where
   emDash = "---"
 
-instance Styles CommonMark where
+instance Styles Markdown where
   emph   texts = "*"  `mappend` mconcat texts `mappend` "*"
   strong texts = "**" `mappend` mconcat texts `mappend` "**"
 
@@ -122,10 +122,10 @@ groceryList
 forgetCtx :: DocWithCtx ctx doc -> doc
 forgetCtx (DocWithCtx doc) = doc
 
-renderCommonMark :: DocWithCtx ctx CommonMark -> CommonMark
+renderCommonMark :: DocWithCtx ctx Markdown -> Markdown
 renderCommonMark = forgetCtx
 
-renderedGroceryList :: CommonMark
+renderedGroceryList :: Markdown
 renderedGroceryList = mconcat $ map renderCommonMark groceryList
 
 -- Malformed doc

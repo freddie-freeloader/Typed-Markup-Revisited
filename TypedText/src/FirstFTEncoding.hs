@@ -7,7 +7,7 @@
 module FirstFTEncoding where
 
 import           Data.String
-import CommonMark
+import           Markdown
 
 main :: IO ()
 main = undefined
@@ -31,7 +31,6 @@ class Block a where
 
 class DocConstraint a =>
   Inline a where
-  emDash ::           Doc a
   str    :: String -> Doc a
   str = Doc . fromString
 
@@ -44,7 +43,7 @@ instance (Inline doc) => IsString (Doc doc) where
 
 {-- Make 'CommonMark' a 'Doc' -}
 
-instance Block CommonMark where
+instance Block Markdown where
   paragraph     = mconcat
   bulletList    = addLineBreak . mconcat . map (mappend "- ")
   heading level = addLineBreak . mappend headingPrefix . mconcat
@@ -54,10 +53,9 @@ instance Block CommonMark where
 addLineBreak :: DocConstraint doc => doc -> doc
 addLineBreak text = text `mappend` "\n"
 
-instance Inline CommonMark where
-  emDash = "---"
+instance Inline Markdown
 
-instance Styles CommonMark where
+instance Styles Markdown where
   emph   texts = "*"  `mappend` mconcat texts `mappend` "*"
   strong texts = "**" `mappend` mconcat texts `mappend` "**"
 
