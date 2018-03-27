@@ -1,6 +1,4 @@
 \clearpage
-Blank
-\clearpage
 
 \section{Introduction}
 
@@ -216,28 +214,27 @@ the AST from the leaves up. These \emph{evaluation strategies} are called
 \textbf{algebras}.\\
 This is in essence the idea of Church/Böhm-Berarducci encoding.
 
-In the appendix we include representation that is purely using application and
-abstraction for our running example. But in Haskell we are luckily not
-restricted to the features of lambda calculus. Therefore we can use record types
-for storing \emph{algebras} (i.e. evaluation strategies).
+In Haskell we are luckily not restricted to the features of lambda calculus.
+Therefore we can use record types for storing \emph{algebras} (i.e. evaluation
+strategies).
 
 Our algebras are of the following type:
 
 \begin{lstlisting}
-data ExprBP a = ExprBP { lit :: Int -> a
-                       , add :: (a -> a -> a) }
+data ExprBB a = ExprBB { lit :: Int -> a
+                       , add :: a -> a -> a }
 \end{lstlisting}
 
 The field called \texttt{lit} contains the interpretation for the leaves and
 therefore is a function that evaluates an \texttt{Int} to some type \texttt{a}.
 The \texttt{add} function takes two evaluated subtrees as an input—in form of
-two \texttt{a}—and outputs also a value of type \texttt{a}.
+two values of type \texttt{a}—and outputs also a value of type \texttt{a}.
 
 An AST, using this definition, looks like this:
 
 \begin{lstlisting}
-exprBP :: ExprBP a -> a
-exprBP (ExprBP lit add) = add (lit 4) (lit 2)
+exprBB :: ExprBB a -> a
+exprBB (ExprBB lit add) = add (lit 4) (lit 2)
 \end{lstlisting}
 
 This is analogue to the BB encoded list from before, but, instead of getting
@@ -247,17 +244,17 @@ algebra that bundles both.
 \subsubsection{Writing algebras}
 
 To evaluate those \emph{BB encoded} algebraic expressions, we have to define
-algebras of the type \texttt{ExprBP}:
+algebras of the type \texttt{ExprBB}:
 
 \begin{lstlisting}
-evalExprBP :: ExprBP Int
-evalExprBP = ExprBP evalInt evalAdd
+evalExprBB :: ExprBB Int
+evalExprBB = ExprBB evalInt evalAdd
   where
     evalInt i   = i
     evalAdd l r = l + r
 
-prettyExprBP :: ExprBP String
-prettyExprBP = ExprBP evalInt evalAdd
+prettyExprBB :: ExprBB String
+prettyExprBB = ExprBB evalInt evalAdd
  where
   evalInt     = show
   evalAdd l r =
@@ -266,24 +263,24 @@ prettyExprBP = ExprBP evalInt evalAdd
     ++ "(" ++ r ++ ")"
 \end{lstlisting}
 
-\texttt{evalExprBP} can be defined even more concise in Haskell:
+\texttt{evalExprBB} can be defined even more concise in Haskell:
 
 \begin{lstlisting}
-evalExprBP :: ExprBP Int
-evalExprBP = ExprBP id (+)
+evalExprBB :: ExprBB Int
+evalExprBB = ExprBB id (+)
 \end{lstlisting}
 
-The AST from before, \texttt{exprBP}, can now be evaluated by supplying the
+The AST from before, \texttt{exprBB}, can now be evaluated by supplying the
 wanted algebra:
 
 \begin{lstlisting}
-> exprBP evalExprBP
+> exprBB evalExprBB
 6
-> exprBP prettyExprBP
+> exprBB prettyExprBB
 "(4)+(2)"
 \end{lstlisting}
 
-We can assess that we could define even more algebras this way and that this
+We assess that we could define even more algebras this way and that this
 encoding is therefore extensible in the dimension of algebras—i.e. observations.
 
 \subsubsection{Add variants}
@@ -294,40 +291,40 @@ observations/algebras but the open question is how to define new variants.
 This is can be done by defining a new data type for constructing algebras:
 
 \begin{lstlisting}
-data NegBP a = NegBP { neg :: a -> a }
+data NegBB a = NegBB { neg :: a -> a }
 \end{lstlisting}
 
 Using this data type, we can define two new observations:
 
 \begin{lstlisting}
-evalNegBP :: NegBP Int
-evalNegBP = NegBP (\e -> -e)
+evalNegBB :: NegBB Int
+evalNegBB = NegBB (\e -> -e)
 
-prettyNegBP :: NegBP String
-prettyNegBP = NegBP (\e -> "-" ++ e)
+prettyNegBB :: NegBB String
+prettyNegBB = NegBB (\e -> "-" ++ e)
 \end{lstlisting}
 
-Finally we are able to use \texttt{ExprBP} with \texttt{NegBP} in composition:
+Finally we are able to use \texttt{ExprBB} with \texttt{NegBB} in composition:
 
 \begin{lstlisting}
-mixedExpr :: ExprBP a -> NegBP a -> a
-mixedExpr (ExprBP lit add) (NegBP neg) = add (lit 4) (neg (lit 2))
+mixedExpr :: ExprBB a -> NegBB a -> a
+mixedExpr (ExprBB lit add) (NegBB neg) = add (lit 4) (neg (lit 2))
 \end{lstlisting}
 \begin{lstlisting}
-> mixedExpr evalExprBP evalNegBP
+> mixedExpr evalExprBB evalNegBB
 2
 \end{lstlisting}
 
 Therefore the Böhm-Berarducci encoding is extensible in both dimensions.\\
 If we wanted to add a new data variant, we would need to add a new data type
-definition for creating corresponding algebras. And we can create new observers
-by creating values of these data types (i.e. algebras).\\
+definition for creating corresponding algebras. And we can create new
+observations by creating values of these data types (i.e. algebras).\\
 As we have shown, these extensions also compose quite well in BB encoding.
 
 Those familiar with the \say{Scrap your Boilerplate} pattern
-\cite{scrap_type_classes} might notice that the \texttt{ExprBP} data type could
-also be defined as a type class and the algebras—\texttt{evalExprBP} and
-\texttt{prettyExprBP}—as instances of this type class. In section
+\cite{scrap_type_classes} might notice that the \texttt{ExprBB} data type could
+also be defined as a type class and the algebras—\texttt{evalExprBB} and
+\texttt{prettyExprBB}—as instances of this type class. In section
 \ref{section_tagless-final} we will demonstrate how the encoding with type
 classes looks like.
 
@@ -350,9 +347,9 @@ In the last section we tried to find an extensible representation of
 \emph{algebraic expressions}. Below we will examine how documents written in
 markup languages like Markdown or \LaTeX{} can be represented.
 
-We will have a look at the representation that Pandoc is using in this
-section and then show in section \ref{section_tagless-final} how a
-representation encoded in tagless-final style is an improvement over that.
+We will have a look at the representation that Pandoc is using in this section
+and then in section \ref{section_tagless-final} show how a representation
+encoded in tagless-final style is an improvement over that.
 
 \subsection{Pandoc's internals}
 
@@ -364,7 +361,7 @@ To translate the content of a document from one format to another, Pandoc first
 parses the input into an abstract syntax tree (AST). As we have shown in section
 \ref{section_ep} there a couple of encodings to choose from and Pandoc uses the
 most common encoding: algebraic data types. In the following we will see what
-this looks like in Haskell code.
+this looks like as Haskell code.
 
 A whole document with its meta data is in Pandoc defined as we would expect:
 
@@ -386,8 +383,8 @@ data Block
 The representation is therefore an ADT encoded rose tree. The \texttt{Block}
 type is not only dependent on it self but also on \texttt{Inline}.
 \texttt{Inline} represents all elements that can only appear inline in
-documents. There are also quite many cases of this sum type and this is just
-a subset of the original definition:
+documents. There are also quite many cases of this sum type and the following is
+just a subset of the original definition:
 
 \begin{lstlisting}
 data Inline
@@ -397,14 +394,14 @@ data Inline
 \end{lstlisting}
 
 The division of the AST cases into the sum types \texttt{Block} and
-\texttt{Inline} puts a bit of a restriction on how those ASTs can be
+\texttt{Inline} puts a bit of a restriction on how these ASTs can be
 constructed. This can be quite helpful when writing parsers and guarantees at
 least of little bit of well-formedness. For example something like this cannot
 be constructed due to the differentiation between \texttt{Block} and
 \texttt{Inline}:
 
 \begin{lstlisting}
-> [ Heading 1  [ Heading 2 [Str "Headingception!!"]]]
+> [Heading 1  [Heading 2 [Str "Headingception!!"]]]
 <interactive>:25:14:
     Couldn't match expected type 'Inline' with actual type 'Block'
     In the expression: Heading 2 [Str "Headingception!!"]
@@ -415,6 +412,35 @@ be constructed due to the differentiation between \texttt{Block} and
 Given the ADT encoded representation we can write observations that interpret
 this data in different ways (Figure \ref{Pandoc_Views}). So in the dimension of
 observations the ADT encoding is also in Pandoc’s case extensible.
+
+\begin{figure}
+\begin{lstlisting}
+newtype Markdown = Markdown String deriving (Monoid, IsString)
+newtype LaTeX    = LaTeX    String deriving (Monoid, IsString)
+
+blockToCMark :: Block -> Markdown
+blockToCMark (Paragraph text)     = mconcatMap inlineToCMark text
+blockToCMark (BulletList docs)    = ...
+blockToCMark (Heading level text) = ...
+
+inlineToCMark :: Inline -> Markdown
+inlineToCMark (Str content)     = fromString content
+inlineToCMARK (Emph contents)   =
+            "*"
+  `mappend` mconcatMap inlineToCMark contents
+  `mappend` "*"
+inlineToCMARK (Strong contents) = ...
+
+blockToLaTeX :: Block -> LaTeX
+...
+
+inlineToLaTeX :: Inline -> LaTeX
+...
+\end{lstlisting}
+\captionof{figure}{\label{Pandoc_Views}
+Observations of Pandoc’s ADT encoding}
+\end{figure}
+
 
 We can construct a tree in the host language, Haskell, and interpret it in two
 different ways:
@@ -456,45 +482,19 @@ groceryList
                  , Paragraph [ "2 " , Emph ["organic"] , " Apples"]]]
 \end{lstlisting}
 
-\begin{figure}
-\begin{lstlisting}
-newtype Markdown = Markdown String deriving (Monoid, IsString)
-newtype LaTeX    = LaTeX    String deriving (Monoid, IsString)
 
-blockToCMark :: Block -> Markdown
-blockToCMark (Paragraph text)     = mconcatMap inlineToCMark text
-blockToCMark (BulletList docs)    = ...
-blockToCMark (Heading level text) = ...
-
-inlineToCMark :: Inline -> Markdown
-inlineToCMark (Str content)     = fromString content
-inlineToCMARK (Emph contents)   =
-            "*"
-  `mappend` mconcatMap inlineToCMark contents
-  `mappend` "*"
-inlineToCMARK (Strong contents) = ...
-
-blockToLaTeX :: Block -> LaTeX
-...
-
-inlineToLaTeX :: Inline -> LaTeX
-...
-\end{lstlisting}
-\captionof{figure}{\label{Pandoc_Views}
-Observations of Pandoc’s ADT encoding}
-\end{figure}
 
 \subsection{Extensibility Analysis}
 
-The simple ADT encoding works very well as long as we have foreseen every
-constructor we might want to create. But as soon as we want to add a new kind of
-constructor—e.g. a node representing the em dash—we are out of luck. Even if we
-have access to the original ADT-definition and we could add this new
-constructor, this would break all existing observations that were written for
-the original set of constructors.
+The simple ADT encoding works very well as long as we have foreseen every data
+variant we might want to create. But as soon as we want to add a new kind of
+variant—e.g. a node representing the em dash—we are out of luck. Even if we have
+access to the original ADT-definition and could add this new variant, this would
+break all existing observations that were written for the original set of
+data variants.
 
 As shown in subsection \ref{subsection_BB_encoding}, we can do better than this
-using \emph{Böhm-Berarducci encoding}.
+by using \emph{Böhm-Berarducci encoding}.
 
 \clearpage
 
@@ -504,7 +504,7 @@ In subsection \ref{subsection_BB_encoding} we passed the algebras of the
 \emph{Böhm-Berarducci encoding} explicitly. In the following we will use type
 classes for the automatic passing of the algebra/observation dictionaries. Using
 BB encoding with the help of type classes is called \emph{tagless-final style}
-and was first described by Kiselyov, Carette and Chan in \emph{Finally Tagless,
+and was first described by Carette, Kiselyov and Chan in \emph{Finally Tagless,
   Partially Evaluated} \cite{finally-tagless}.
 
 Our first attempt to encode our document in the tagless-final encoding will not
@@ -515,9 +515,9 @@ property quite easily with great extensibility properties.
 The basic idea of the tagless-final encoding is to create a type class that
 specifies all our variants in Böhm-Berarducci encoding. This is analogue to the
 \emph{Scrap your type class} variant defined in section
-\ref{subsection_BB_encoding}, with the only technical difference:\\
-The observers/algebras are now specified with the help of type classes and the
-implementations of these specifications are instances of this type class.
+\ref{subsection_BB_encoding} with the only technical difference:\\
+The observations/algebras are now specified with the help of type classes and
+the implementations of these specifications are instances of this type class.
 
 \subsection{Böhm-Berarducci encoding with type classes}
 
@@ -556,10 +556,10 @@ simply a \emph{newtype} of \texttt{String}. Therefore the instances for
 \texttt{IsString} and \texttt{Monoid} are straightforward to implement and can
 even be derived using GHC’s \texttt{GeneralizedNewtypeDeriving} language pragma.
 
-Figure \ref{FT_Observer} shows the implementation of observers in the
+Figure \ref{FT_Observer} shows the implementation of observations in the
 tagless-final encoding. The implementation is really similar to the one in the
 ADT encoding. If we have close look though, we can see one difference: since our
-data type is Böhm-Berarducci encoded, the observations do not need to be called
+data type is Böhm-Berarducci encoded, the functions do not need to be called
 recursively. This makes both our code simpler and is essential for
 extensibility.
 
@@ -575,10 +575,10 @@ newtype Doc doc = Doc doc
 -- DocConstraint defined using ConstraintKinds
 type DocConstraint doc = (Monoid doc, IsString doc)
 
-instance DocConstraint doc => -- Have to restrict for the use of 'mempty'
-  Monoid (Doc doc) where
-  mappend (Doc doc1) (Doc doc2) = Doc $ doc1 `mappend` doc2
-  mempty = Doc mempty
+instance DocConstraint doc => Monoid (Doc doc) where
+...
+instance DocConstraint doc => IsString (Doc doc) where
+...
 
 -- Algebra specification
 
@@ -598,81 +598,79 @@ Böhm-Berarducci encoding using type classes—i.e. tagless-final style}
 
 \begin{figure}
 \begin{lstlisting}
--- Implement Markdown observer
+newtype Markdown = Markdown String deriving (Monoid, IsString)
+newtype LaTeX    = LaTeX    String deriving (Monoid, IsString)
+
+-- Markdown observations
 
 instance Block Markdown where
-  paragraph = fromInline . mconcat
+  paragraph = mconcat
   bulletList = ...
   heading level = ...
 
 instance Inline Markdown
 
-instance Styles Markdown where
-  emph   texts = "*"  `mappend` mconcat texts `mappend` "*"
-  strong texts = ...
-
-
--- Implement LaTeX observer
+-- LaTeX observations
 
 instance Block LaTeX where
 ...
 
 instance Inline LaTeX where
-...
-
-instance Styles LaTeX where
-...
 \end{lstlisting}
 \captionof{figure}{\label{FT_Observer}
-Observer implementation in the tagless-final encoding}
+Observations in the tagless-final encoding}
 \end{figure}
 
+\subsection{Extensibility of tagless-final markup}
 
 Interestingly \texttt{Doc} has now no dependency on \texttt{Inline} anymore and
-we are now allowed to create the following AST:
+we are allowed to create the following AST:
 
 \begin{lstlisting}
-badHeading = [ heading 1  [ heading 2 [str "Headingception!!"]]]
+badHeading = [heading 1  [heading 2 [str "Headingception!!"]]]
 \end{lstlisting}
-
-\subsection{Where tagless-final shines}
 
 As noted above, we lost the distinction between \texttt{Doc} and
-\texttt{Inline}. But we also gained something—\emph{Doc} can now be used
-without \emph{Inline} and we can now also add new constructors without changing our
-original constructor definitions:
+\texttt{Inline}. But we also gained something—\texttt{Doc} can now be used
+without \texttt{Inline} and we can now also add new observations without
+changing our original observation definitions:
 
 \begin{lstlisting}
-class Styles doc where
-  emph   :: [DocWithCtx InlineCtx doc] -> DocWithCtx InlineCtx doc
-  strong :: [DocWithCtx InlineCtx doc] -> DocWithCtx InlineCtx doc
+class Styles a where
+  emph   :: [Doc a] -> Doc a
+  strong :: [Doc a] -> Doc a
+
+instance Styles Markdown where
+  emph   texts = "*"  `mappend` mconcat texts `mappend` "*"
+  strong texts = "**"  `mappend` mconcat texts `mappend` "**"
 \end{lstlisting}
+
+\pagebreak
 
 Not only can we now mix those node types at will, but the type of an expression
 will reflect which type classes we used for constructing it:
 
 \begin{lstlisting}
-stylishNote :: (Inline a, Styles a) => a
+stylishNote :: (Inline a, Styles a) => Doc a
 stylishNote = strong ["Green Tea keeps me awake"]
 \end{lstlisting}
 
 That is why the type system can now statically tell us whether we can evaluate
-\texttt{stylishNote} to a particular type.
-
-If we wanted to evaluate an expression that uses constructors that belong to a
-type class \emph{X} and evaluate the expression to some carrier type \emph{C},
-\emph{C} has to be instance of \emph{X}. Since this is a static property, it can
-be decided at compile time.
+\texttt{stylishNote} to a particular type.\\
+If we wanted to evaluate an
+expression that uses algebras that belong to a type class \emph{X} and evaluate
+the expression to some carrier type \emph{C}, \emph{C} has to be instance of
+\emph{X}. Since this is a static property, it can be decided at compile time.
 
 \subsection{A short note on GHC’s Type Inference}
 
-When we define an AST like \texttt{stylishNote} GHC’s type inference might come
-in our way. If no type signature for \texttt{stylishNote} is supplied GHC will
+When we define an AST like \texttt{stylishNote}, GHC’s type inference might come
+in our way. If no type signature for \texttt{stylishNote} is supplied, GHC will
 try to infer a concrete type for this definition and not the most generalized
 type.
 
 We can avoid this by either supplying the generalized type signature—as done
-above—or using the language pragma \emph{NoMonomorphismRestriction}.
+above—or using the language pragma \texttt{NoMonomorphismRestriction}.
 
 \section{Recover Context Awareness}
 
@@ -685,7 +683,7 @@ newtype DocWithCtx ctx doc = DocWithCtx doc
 
 \texttt{ctx} is a phantom type and with its help we can specify in which context
 a constructor can be used. Since phantom types are not materialized on the value
-level, we simply use empty data declarations as context types.
+level, we simply use empty data declarations for our context types.
 
 \begin{lstlisting}
 -- Context definitions
@@ -735,13 +733,13 @@ class Math doc where
 
 \section{Conclusion}
 
-We presented two different encodings that we can choose from for representing a
-markup language. While the ADT encoding might look like the tool for the job, we
-have seen that it has some serious limitations. Especially if our set of data
+We presented two different encodings that we can choose from for representing
+a markup language. While the ADT encoding might look like the tool for the job,
+we have seen that it has some serious limitations. Especially if our set of data
 variants might scale up and we would do not want to break other people's
 observations by changing the ADT definition—the tagless-final approach might be
-a good solution also for this instance of the \emph{Expression Problem}.
+a good solution also for this instance of the \emph{expression problem}.
 
-For those who want to study this approach in more depth—the lecture notes on
-\emph{Typed Tagless Final Interpreters} \cite{finally-tagless-tut} are a great
-resource.
+For those who want to study the tagless-final style in more depth—the lecture
+notes on \emph{Typed Tagless Final Interpreters} \cite{finally-tagless-tut} are
+a great resource.
