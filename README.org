@@ -4,7 +4,7 @@ This is still *work in progress*.
   
 ** Paper
    
-Currently the paper is worked on in [[file:Paper/Typed_Markup.tex]] and the rendered
+Currently the paper is worked on in [[file:Paper/]] and the rendered
 version can be found in [[file:Paper/Typed_Markup.pdf]].
 
 ** Code
