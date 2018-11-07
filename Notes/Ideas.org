@@ -1,4 +1,9 @@
 * Re-Relevant
+
+** Use `ConstraintKinds` for available contexts
+
+- similar to [[https://diogocastro.com/blog/2018/10/17/haskells-kind-system-a-primer/][this example in the blog post]]
+
 ** It's really just an extensible fold
 
 - Describe list as an interface/algebra?
