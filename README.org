@@ -9,4 +9,4 @@ version can be found in [[file:Paper/Typed_Markup.pdf]].
 
 ** Code
    
-The code that is presented in the paper can be found [[file:Code/][here]].
+The code presented in the paper can be found [[file:Code/][here]].
